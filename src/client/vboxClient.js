@@ -7,6 +7,9 @@ function assertUuid(uuid) {
 }
 
 function vbox(args) {
+    if (typeof cockpit === "undefined") {
+        throw new Error("cockpit is not available: ensure the plugin is opened from Cockpit and ../base1/cockpit.js is loaded");
+    }
     return cockpit.spawn(["VBoxManage", ...args], {
         err: "message",
         environ: ["LC_ALL=C"],

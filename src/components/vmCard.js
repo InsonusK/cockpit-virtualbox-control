@@ -5,6 +5,7 @@ import { formatFlag } from "./utils.js";
 export function registerVmCard(Alpine) {
     Alpine.data("vmCard", (vm, app) => ({
         vm,
+        app,
         expanded: false,
         details: null,
         loadingDetails: false,

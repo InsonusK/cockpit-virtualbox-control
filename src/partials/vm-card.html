@@ -1,154 +1,39 @@
-<div class="vm-card" x-data="vmCard(vm, $data)">
-    <div class="vm-header" @click="toggleDetails" title="Нажмите для просмотра деталей">
-        <div class="vm-info">
-            <span class="vm-name" x-text="vm.name"></span>
-            <span class="vm-state">
-                <span class="dot" :class="$parent.stateDotClass(vm.state)"></span>
-                <span x-text="$parent.stateLabel(vm.state)"></span>
+<div class="vm-header" @click="toggleDetails" title="Нажмите для просмотра деталей">
+    <div class="vm-info">
+        <span class="vm-name" x-text="vm.name"></span>
+        <span class="vm-state">
+            <span class="dot" :class="app.stateDotClass(vm.state)"></span>
+            <span x-text="app.stateLabel(vm.state)"></span>
+        </span>
+    </div>
+    <div class="vm-actions">
+        <template x-if="vm.state === 'running'">
+            <span>
+                <button class="btn btn-small" @click.stop="app.runControl(vm, 'pause')">Пауза</button>
+                <button class="btn btn-small" @click.stop="app.runControl(vm, 'savestate')">Сохранить состояние</button>
+                <button class="btn btn-small" @click.stop="app.runControl(vm, 'acpipowerbutton')">ACPI выключение</button>
+                <button class="btn btn-small btn-danger" @click.stop="app.runControl(vm, 'poweroff')">Force off</button>
             </span>
-        </div>
-        <div class="vm-actions">
-            <template x-if="vm.state === 'running'">
-                <span>
-                    <button class="btn btn-small" @click.stop="$parent.runControl(vm, 'pause')">Пауза</button>
-                    <button class="btn btn-small" @click.stop="$parent.runControl(vm, 'savestate')">Сохранить состояние</button>
-                    <button class="btn btn-small" @click.stop="$parent.runControl(vm, 'acpipowerbutton')">ACPI выключение</button>
-                    <button class="btn btn-small btn-danger" @click.stop="$parent.runControl(vm, 'poweroff')">Force off</button>
-                </span>
-            </template>
-            <template x-if="vm.state === 'paused'">
-                <span>
-                    <button class="btn btn-small" @click.stop="$parent.runControl(vm, 'resume')">Продолжить</button>
-                    <button class="btn btn-small btn-danger" @click.stop="$parent.runControl(vm, 'poweroff')">Force off</button>
-                </span>
-            </template>
-            <template x-if="vm.state !== 'running' && vm.state !== 'paused'">
-                <span>
-                    <button class="btn btn-small" @click.stop="$parent.runStart(vm, 'headless')">Запустить (headless)</button>
-                    <button class="btn btn-small" @click.stop="$parent.runStart(vm, 'gui')">Запустить (GUI)</button>
-                </span>
-            </template>
-            <button class="btn btn-small btn-secondary" @click.stop="$parent.openSnapshots(vm)">Снапшоты</button>
-        </div>
+        </template>
+        <template x-if="vm.state === 'paused'">
+            <span>
+                <button class="btn btn-small" @click.stop="app.runControl(vm, 'resume')">Продолжить</button>
+                <button class="btn btn-small btn-danger" @click.stop="app.runControl(vm, 'poweroff')">Force off</button>
+            </span>
+        </template>
+        <template x-if="vm.state !== 'running' && vm.state !== 'paused'">
+            <span>
+                <button class="btn btn-small" @click.stop="app.runStart(vm, 'headless')">Запустить (headless)</button>
+                <button class="btn btn-small" @click.stop="app.runStart(vm, 'gui')">Запустить (GUI)</button>
+            </span>
+        </template>
+        <button class="btn btn-small btn-secondary" @click.stop="app.openSnapshots(vm)">Снапшоты</button>
     </div>
-    <div class="vm-details" x-show="expanded" x-cloak>
-        <p class="empty-msg" x-show="loadingDetails">Загрузка деталей...</p>
-        <div x-show="!loadingDetails && details">
-            <div class="detail-section">
-                <h3>Общая</h3>
-                <div class="detail-grid">
-                    <div><span>CPU:</span> <span x-text="details.general.cpu"></span></div>
-                    <div><span>Memory:</span> <span x-text="details.general.memory"></span></div>
-                    <div><span>ОС:</span> <span x-text="details.general.os"></span></div>
-                    <div><span>VRDE port:</span> <span x-text="details.general.vrdePort"></span></div>
-                </div>
-            </div>
-
-            <div class="detail-section">
-                <h3>Сети</h3>
-                <template x-if="details.networks.length">
-                    <table class="detail-table">
-                        <thead>
-                            <tr><th>Adapter</th><th>Тип</th><th>MAC</th><th>Включена</th><th>Проброс портов</th></tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="n in details.networks" :key="n.slot">
-                                <tr>
-                                    <td x-text="n.slot"></td>
-                                    <td x-text="n.type"></td>
-                                    <td x-text="n.mac"></td>
-                                    <td x-text="n.enabled ? 'да' : 'нет'"></td>
-                                    <td>
-                                        <template x-if="n.portForwarding.length">
-                                            <div>
-                                                <template x-for="pf in n.portForwarding" :key="pf">
-                                                    <div x-text="pf"></div>
-                                                </template>
-                                            </div>
-                                        </template>
-                                        <template x-if="!n.portForwarding.length">
-                                            <span class="empty-msg">—</span>
-                                        </template>
-                                    </td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
-                <template x-if="!details.networks.length">
-                    <p class="empty-msg">Нет настроенных сетей</p>
-                </template>
-            </div>
-
-            <div class="detail-section">
-                <h3>Носители</h3>
-                <template x-if="details.media.length">
-                    <table class="detail-table">
-                        <thead><tr><th>Тип</th><th>Путь</th><th>Размер</th></tr></thead>
-                        <tbody>
-                            <template x-for="m in details.media" :key="m.path">
-                                <tr>
-                                    <td x-text="m.type"></td>
-                                    <td x-text="m.path"></td>
-                                    <td x-text="m.size"></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
-                <template x-if="!details.media.length">
-                    <p class="empty-msg">Нет носителей</p>
-                </template>
-            </div>
-
-            <div class="detail-section">
-                <h3>USB устройства</h3>
-                <template x-if="details.usb.length">
-                    <table class="detail-table">
-                        <thead>
-                            <tr><th>USB устройство</th><th>Статус</th><th>Автоподключение</th></tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="u in details.usb" :key="u.label">
-                                <tr>
-                                    <td x-text="u.label"></td>
-                                    <td x-text="u.active ? 'подключено' : 'не подключено'"></td>
-                                    <td x-text="u.autoConnect ? 'да' : 'нет'"></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
-                <template x-if="!details.usb.length">
-                    <p class="empty-msg">Нет USB устройств</p>
-                </template>
-            </div>
-
-            <div class="detail-section">
-                <h3>Общие папки</h3>
-                <template x-if="details.sharedFolders.length">
-                    <table class="detail-table">
-                        <thead>
-                            <tr><th>Название</th><th>Путь на хосте</th><th>Путь в гостевой ОС</th><th>Только чтение</th><th>Автоподключение</th></tr>
-                        </thead>
-                        <tbody>
-                            <template x-for="sf in details.sharedFolders" :key="sf.name">
-                                <tr>
-                                    <td x-text="sf.name"></td>
-                                    <td x-text="sf.hostPath"></td>
-                                    <td x-text="sf.guestPath"></td>
-                                    <td x-text="formatFlag(sf.readOnly)"></td>
-                                    <td x-text="formatFlag(sf.autoMount)"></td>
-                                </tr>
-                            </template>
-                        </tbody>
-                    </table>
-                </template>
-                <template x-if="!details.sharedFolders.length">
-                    <p class="empty-msg">Нет общих папок</p>
-                </template>
-            </div>
-        </div>
-        <p class="empty-msg" x-show="!loadingDetails && !details">Не удалось загрузить детали</p>
-    </div>
+</div>
+<div class="vm-details" x-show="expanded" x-cloak>
+    <p class="empty-msg" x-show="loadingDetails">Загрузка деталей...</p>
+    <template x-if="!loadingDetails && details">
+        <div x-partial="tpl-vm-details"></div>
+    </template>
+    <p class="empty-msg" x-show="!loadingDetails && !details">Не удалось загрузить детали</p>
 </div>
