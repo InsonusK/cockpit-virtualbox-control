@@ -81,27 +81,37 @@ export function registerVmCard(Alpine) {
         },
 
         /** Sends a controlvm command for the selected VM and refreshes the list. */
-        async runControl(command) {
+        runControl(command) {
             app.setStatus(`Выполняется: controlvm ${command}...`);
-            try {
-                await controlVm(this.vm.uuid, command);
-                app.setStatus(`Готово: ${this.vm.name}`);
-            } catch (e) {
-                app.setStatus("Ошибка: " + (e.message || e), true);
-            }
-            await this.loadState();
+            return controlVm(this.vm.uuid, command)
+                .then(() => {
+                    app.setStatus(`Готово: ${this.vm.name}`);
+                })
+                .catch((e) => {
+                    app.setStatus("Ошибка: " + (e.message || e), true);
+                })
+                .finally(() => {
+                    // Return the promise so runControl's caller can wait for the
+                    // state refresh to finish, even though loadState yields no value.
+                    return this.loadState();
+                });
         },
 
         /** Starts the selected VM in headless or GUI mode and refreshes the list. */
-        async runStart(type) {
+        runStart(type) {
             app.setStatus(`Выполняется: startvm --type ${type}...`);
-            try {
-                await startVm(this.vm.uuid, type);
-                app.setStatus(`Готово: ${this.vm.name}`);
-            } catch (e) {
-                app.setStatus("Ошибка: " + (e.message || e), true);
-            }
-            await this.loadState();
+            return startVm(this.vm.uuid, type)
+                .then(() => {
+                    app.setStatus(`Готово: ${this.vm.name}`);
+                })
+                .catch((e) => {
+                    app.setStatus("Ошибка: " + (e.message || e), true);
+                })
+                .finally(() => {
+                    // Return the promise so runStart's caller can wait for the
+                    // state refresh to finish, even though loadState yields no value.
+                    return this.loadState();
+                });
         },
 
         /** Opens the snapshot modal for the selected VM. */
