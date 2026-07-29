@@ -2,16 +2,23 @@ import { listVms, vmInfo, controlVm, startVm } from "../client/vboxClient.js";
 import { parseVmList, parseVmState } from "../client/parser.js";
 import { stateLabel, stateDotClass } from "./utils.js";
 
+/**
+ * Registers the main `app` Alpine.js data component.
+ *
+ * @param {Object} Alpine — Alpine.js instance.
+ */
 export function registerApp(Alpine) {
     Alpine.data("app", () => ({
         vms: [],
         status: { message: "Загрузка...", isError: false },
         loading: false,
 
+        /** Updates the current status message shown in the UI. */
         setStatus(message, isError = false) {
             this.status = { message: message || "", isError };
         },
 
+        /** Loads the VM list and refreshes each VM's state. */
         async loadVms() {
             if (this.loading) return;
             this.loading = true;
@@ -40,6 +47,7 @@ export function registerApp(Alpine) {
             }
         },
 
+        /** Sends a controlvm command for the selected VM and refreshes the list. */
         async runControl(vm, command) {
             this.setStatus(`Выполняется: controlvm ${command}...`);
             try {
@@ -51,6 +59,7 @@ export function registerApp(Alpine) {
             await this.loadVms();
         },
 
+        /** Starts the selected VM in headless or GUI mode and refreshes the list. */
         async runStart(vm, type) {
             this.setStatus(`Выполняется: startvm --type ${type}...`);
             try {
@@ -62,6 +71,7 @@ export function registerApp(Alpine) {
             await this.loadVms();
         },
 
+        /** Opens the snapshot modal for the selected VM. */
         openSnapshots(vm) {
             Alpine.store("snapshotModal").show(vm, this.setStatus.bind(this));
         },
@@ -69,6 +79,7 @@ export function registerApp(Alpine) {
         stateLabel,
         stateDotClass,
 
+        /** Called by Alpine when the component is initialized. */
         init() {
             this.loadVms();
         },

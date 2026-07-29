@@ -8,6 +8,11 @@ registerApp(Alpine);
 registerVmCard(Alpine);
 registerSnapshotModal(Alpine);
 
+/**
+ * Loads partial templates into the DOM and starts Alpine.js.
+ *
+ * @returns {Promise<void>}
+ */
 async function init() {
     await Promise.all([
         loadPartial("partials/app.html", "#app"),

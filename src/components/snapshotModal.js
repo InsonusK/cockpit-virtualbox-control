@@ -1,5 +1,10 @@
 import { listSnapshots, takeSnapshot, restoreSnapshot } from "../client/vboxClient.js";
 
+/**
+ * Registers the `snapshotModal` Alpine.js store.
+ *
+ * @param {Object} Alpine — Alpine.js instance.
+ */
 export function registerSnapshotModal(Alpine) {
     Alpine.store("snapshotModal", {
         isOpen: false,
@@ -10,6 +15,7 @@ export function registerSnapshotModal(Alpine) {
         onStatus: null,
         title: "Снапшоты",
 
+        /** Extracts snapshot names from machinereadable `VBoxManage snapshot list` output. */
         parseSnapshotList(output) {
             const names = [];
             const re = /^SnapshotName(-\d+)?="(.*)"$/gm;
@@ -20,12 +26,14 @@ export function registerSnapshotModal(Alpine) {
             return names;
         },
 
+        /** Reports a status message back to the parent app if a callback is set. */
         setStatus(message, isError = false) {
             if (this.onStatus) {
                 this.onStatus(message, isError);
             }
         },
 
+        /** Opens the modal for the given VM and loads its snapshots. */
         show(vm, statusCallback) {
             this.vm = vm;
             this.onStatus = statusCallback;
@@ -35,6 +43,7 @@ export function registerSnapshotModal(Alpine) {
             this.refresh();
         },
 
+        /** Closes the modal and resets its state. */
         close() {
             this.isOpen = false;
             this.vm = null;
@@ -43,6 +52,7 @@ export function registerSnapshotModal(Alpine) {
             this.onStatus = null;
         },
 
+        /** Reloads the snapshot list for the current VM. */
         async refresh() {
             if (!this.vm) return;
             this.loading = true;
@@ -58,6 +68,7 @@ export function registerSnapshotModal(Alpine) {
             }
         },
 
+        /** Creates a new snapshot from the name entered in the modal. */
         async take() {
             const name = (this.newName || "").trim();
             if (!name || !this.vm) return;
@@ -72,6 +83,7 @@ export function registerSnapshotModal(Alpine) {
             await this.refresh();
         },
 
+        /** Restores the VM to the selected snapshot. */
         async restore(name) {
             if (!this.vm) return;
             this.setStatus("Восстановление снапшота...");

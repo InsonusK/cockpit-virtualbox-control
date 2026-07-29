@@ -1,5 +1,14 @@
+/** Cache for already fetched and resolved partial templates. */
 const partialCache = new Map();
 
+/**
+ * Loads an HTML partial and inserts it into the selected DOM element.
+ *
+ * @param {string} path — URL of the partial template.
+ * @param {string} targetSelector — CSS selector of the element to populate.
+ * @returns {Promise<void>}
+ * @throws {Error} if the target element is not found or the partial fails to load.
+ */
 export async function loadPartial(path, targetSelector) {
     const target = document.querySelector(targetSelector);
     if (!target) {
@@ -9,6 +18,15 @@ export async function loadPartial(path, targetSelector) {
     target.innerHTML = html;
 }
 
+/**
+ * Fetches a partial template and recursively resolves `<x-include>` tags.
+ *
+ * Results are cached so nested includes are fetched only once.
+ *
+ * @param {string} path — URL of the partial template.
+ * @returns {Promise<string>} resolved HTML with all includes inlined.
+ * @throws {Error} if the HTTP request fails.
+ */
 async function fetchPartial(path) {
     if (partialCache.has(path)) {
         return partialCache.get(path);

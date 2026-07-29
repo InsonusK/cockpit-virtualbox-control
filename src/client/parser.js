@@ -1,4 +1,12 @@
-// Parses `VBoxManage list vms` output: "Name" {uuid}
+/**
+ * Parses `VBoxManage list vms` output.
+ *
+ * Each line like `"VM Name" {uuid}` becomes an object `{ name, uuid }`.
+ * Escaped quotes inside VM names are unescaped.
+ *
+ * @param {string} output — raw output from `VBoxManage list vms`.
+ * @returns {{name: string, uuid: string}[]} list of virtual machines.
+ */
 export function parseVmList(output) {
     const vms = [];
     const re = /^"(.*)"\s+\{([0-9a-fA-F-]+)\}/gm;
@@ -9,12 +17,25 @@ export function parseVmList(output) {
     return vms;
 }
 
-// Parses machinereadable showvminfo output for the VMState field
+/**
+ * Extracts VMState from machinereadable `VBoxManage showvminfo` output.
+ *
+ * @param {string} output — raw machinereadable VM info.
+ * @returns {string} VM state (e.g. "running", "poweroff") or "unknown".
+ */
 export function parseVmState(output) {
     const match = output.match(/^VMState="(.+)"$/m);
     return match ? match[1] : "unknown";
 }
 
+/**
+ * Parses key=value pairs from machinereadable VBoxManage output.
+ *
+ * Unwraps quoted values. Keys and values are trimmed.
+ *
+ * @param {string} output — raw machinereadable output.
+ * @returns {Object<string, string>} map of parsed properties.
+ */
 export function parseKeyValue(output) {
     const map = {};
     const re = /^"?([^"=\n]+)"?\s*=\s*(.*)$/gm;
@@ -29,6 +50,15 @@ export function parseKeyValue(output) {
     return map;
 }
 
+/**
+ * Parses `VBoxManage list hdds` / `list dvds` output into medium objects.
+ *
+ * Blocks separated by blank lines become objects; only blocks with UUID are kept.
+ *
+ * @param {string} output — raw output from `VBoxManage list hdds` or `list dvds`.
+ * @param {string} kind — medium kind marker: "hdd" or "dvd".
+ * @returns {{kind: string, [key: string]: string}[]} list of media.
+ */
 export function parseMediumList(output, kind) {
     const items = [];
     if (!output) return items;
@@ -45,6 +75,12 @@ export function parseMediumList(output, kind) {
     return items;
 }
 
+/**
+ * Parses shared folders from human-readable `VBoxManage showvminfo` output.
+ *
+ * @param {string} humanOutput — human-readable VM info output.
+ * @returns {{name: string, hostPath: string, guestPath: string, readOnly: boolean, autoMount: boolean}[]} shared folders list.
+ */
 export function parseSharedFolders(humanOutput) {
     const folders = [];
     const re = /Name:\s*'([^']+)'[,\s]+Host path:\s*'([^']+)'(?:\s*\([^)]+\))?[,\s]+(\S+)(?:[,\s]+(\S+))?/g;
@@ -66,6 +102,18 @@ export function parseSharedFolders(humanOutput) {
     return folders;
 }
 
+/**
+ * Aggregates VM details from several `VBoxManage` outputs.
+ *
+ * Combines machinereadable VM info with HDD/DVD lists and human-readable info
+ * to produce general info, network adapters, media, USB filters and shared folders.
+ *
+ * @param {string} infoOutput — machinereadable `showvminfo` output.
+ * @param {string} hddsOutput — output from `VBoxManage list hdds`.
+ * @param {string} dvdsOutput — output from `VBoxManage list dvds`.
+ * @param {string} humanInfoOutput — human-readable `showvminfo` output.
+ * @returns {{general: Object, networks: Object[], media: Object[], usb: Object[], sharedFolders: Object[]}} structured VM details.
+ */
 export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutput) {
     const map = parseKeyValue(infoOutput);
 

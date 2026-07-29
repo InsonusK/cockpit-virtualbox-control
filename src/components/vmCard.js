@@ -2,6 +2,11 @@ import { vmInfo, vmInfoHuman, listHdds, listDvds } from "../client/vboxClient.js
 import { parseVmDetails } from "../client/parser.js";
 import { formatFlag } from "./utils.js";
 
+/**
+ * Registers the `vmCard` Alpine.js data component for a single VM card.
+ *
+ * @param {Object} Alpine — Alpine.js instance.
+ */
 export function registerVmCard(Alpine) {
     Alpine.data("vmCard", (vm, app) => ({
         vm,
@@ -12,6 +17,7 @@ export function registerVmCard(Alpine) {
 
         formatFlag,
 
+        /** Toggles the expanded details panel and loads VM details on first open. */
         async toggleDetails() {
             if (this.expanded) {
                 this.expanded = false;
