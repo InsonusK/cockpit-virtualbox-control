@@ -291,6 +291,23 @@ describe("Alpine components with mocked cockpit", () => {
             assert.deepEqual(modal.snapshots, ["base"]);
         });
 
+        test("show handles empty snapshot list without error", async () => {
+            globalThis.cockpit = {
+                spawn: () => Promise.reject(""),
+            };
+
+            const modal = alpine.getStore("snapshotModal");
+            modal.show({ name: "Test VM", uuid: UUID }, app.setStatus.bind(app));
+            await new Promise((r) => setTimeout(r, 0));
+
+            assert.deepEqual(modal.snapshots, []);
+            assert.equal(modal.loading, false);
+            assert.equal(
+                statusMessages.some((m) => /Ошибка загрузки снапшотов/.test(m.message)),
+                false,
+            );
+        });
+
         test("take creates snapshot and refreshes list", async () => {
             const calls = [];
             globalThis.cockpit = {

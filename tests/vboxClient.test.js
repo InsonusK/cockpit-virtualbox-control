@@ -168,6 +168,31 @@ describe("vboxClient", () => {
         test("rejects empty snapshot name on restore", async () => {
             await assert.rejects(async () => restoreSnapshot(UUID, ""), /Snapshot name is empty/);
         });
+
+        test("returns empty list when VBoxManage reports no snapshots", async () => {
+            globalThis.cockpit = {
+                spawn: createMockSpawn({
+                    [`snapshot ${UUID} list --machinereadable`]: "This machine does not have any snapshots\n",
+                }),
+            };
+            const output = await listSnapshots(UUID);
+            assert.equal(output, "");
+        });
+
+        test("treats empty rejection as empty snapshot list", async () => {
+            globalThis.cockpit = {
+                spawn: () => Promise.reject(""),
+            };
+            const output = await listSnapshots(UUID);
+            assert.equal(output, "");
+        });
+
+        test("propagates real snapshot errors", async () => {
+            globalThis.cockpit = {
+                spawn: () => Promise.reject(new Error("VM not found")),
+            };
+            await assert.rejects(() => listSnapshots(UUID), /VM not found/);
+        });
     });
 
     describe("error handling", () => {

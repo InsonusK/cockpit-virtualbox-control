@@ -62,7 +62,7 @@ export function registerSnapshotModal(Alpine) {
                 this.snapshots = this.parseSnapshotList(output);
             } catch (e) {
                 this.snapshots = [];
-                this.setStatus("Ошибка загрузки снапшотов: " + (e.message || e), true);
+                this.setStatus("Ошибка загрузки снапшотов: " + ((e && e.message) || e || "неизвестная ошибка"), true);
             } finally {
                 this.loading = false;
             }

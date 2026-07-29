@@ -107,12 +107,30 @@ export function startVm(uuid, type) {
 /**
  * Lists snapshots of a VM in machinereadable format.
  *
+ * VBoxManage reports "This machine does not have any snapshots" as a normal
+ * condition, but depending on the version/exit-code path it may arrive as a
+ * rejected promise with an empty or informational message. Treat both cases as
+ * an empty snapshot list instead of an error.
+ *
  * @param {string} uuid — VM UUID.
  * @returns {Promise<string>} snapshot list output.
  */
 export function listSnapshots(uuid) {
     assertUuid(uuid);
-    return vbox(["snapshot", uuid, "list", "--machinereadable"]);
+    return vbox(["snapshot", uuid, "list", "--machinereadable"])
+        .then((output) => {
+            if (typeof output === "string" && /does not have any snapshots/i.test(output)) {
+                return "";
+            }
+            return output;
+        })
+        .catch((e) => {
+            const msg = (e && e.message) || String(e);
+            if (!msg || /does not have any snapshots/i.test(msg)) {
+                return "";
+            }
+            throw e;
+        });
 }
 
 /**
