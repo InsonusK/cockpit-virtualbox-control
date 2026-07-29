@@ -13,6 +13,8 @@
 
 * { box-sizing: border-box; }
 
+[x-cloak] { display: none !important; }
+
 body {
     margin: 0;
     background: var(--bg);
@@ -34,6 +36,7 @@ h1 { font-size: 20px; font-weight: 600; margin: 0; }
 .header-actions { display: flex; align-items: center; gap: 12px; }
 
 #status-msg { color: var(--text-dim); font-size: 13px; }
+.status-error { color: var(--red) !important; }
 
 .btn {
     background: var(--accent);
@@ -45,7 +48,8 @@ h1 { font-size: 20px; font-weight: 600; margin: 0; }
     font-size: 13px;
 }
 
-.btn:hover { opacity: 0.85; }
+.btn:hover:not(:disabled) { opacity: 0.85; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .btn-secondary { background: var(--gray); }
 .btn-danger { background: var(--red); }
@@ -91,13 +95,11 @@ h1 { font-size: 20px; font-weight: 600; margin: 0; }
 .vm-actions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
 
 .vm-details {
-    display: none;
+    display: block;
     margin-top: 14px;
     padding-top: 14px;
     border-top: 1px solid var(--card-border);
 }
-
-.vm-card.expanded .vm-details { display: block; }
 
 .detail-section { margin-bottom: 16px; }
 .detail-section:last-child { margin-bottom: 0; }

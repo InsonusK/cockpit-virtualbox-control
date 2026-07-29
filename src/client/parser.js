@@ -1,23 +1,21 @@
-"use strict";
-
 // Parses `VBoxManage list vms` output: "Name" {uuid}
-function parseVmList(output) {
+export function parseVmList(output) {
     const vms = [];
     const re = /^"(.*)"\s+\{([0-9a-fA-F-]+)\}/gm;
     let match;
     while ((match = re.exec(output)) !== null) {
-        vms.push({ name: match[1], uuid: match[2] });
+        vms.push({ name: match[1].replace(/\\"/g, '"'), uuid: match[2] });
     }
     return vms;
 }
 
 // Parses machinereadable showvminfo output for the VMState field
-function parseVmState(output) {
+export function parseVmState(output) {
     const match = output.match(/^VMState="(.+)"$/m);
     return match ? match[1] : "unknown";
 }
 
-function parseKeyValue(output) {
+export function parseKeyValue(output) {
     const map = {};
     const re = /^"?([^"=\n]+)"?\s*=\s*(.*)$/gm;
     let match;
@@ -31,7 +29,7 @@ function parseKeyValue(output) {
     return map;
 }
 
-function parseMediumList(output, kind) {
+export function parseMediumList(output, kind) {
     const items = [];
     if (!output) return items;
     const blocks = output.trim().split(/\n\s*\n/);
@@ -47,7 +45,7 @@ function parseMediumList(output, kind) {
     return items;
 }
 
-function parseSharedFolders(humanOutput) {
+export function parseSharedFolders(humanOutput) {
     const folders = [];
     const re = /Name:\s*'([^']+)'[,\s]+Host path:\s*'([^']+)'(?:\s*\([^)]+\))?[,\s]+(\S+)(?:[,\s]+(\S+))?/g;
     let match;
@@ -61,14 +59,14 @@ function parseSharedFolders(humanOutput) {
             name,
             hostPath,
             guestPath: flags.includes("auto-mount") ? name : "—",
-            readOnly: flags.includes("read-only"),
+            readOnly: flags.includes("read-only") || flags.includes("readonly"),
             autoMount: flags.includes("auto-mount"),
         });
     }
     return folders;
 }
 
-function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutput) {
+export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutput) {
     const map = parseKeyValue(infoOutput);
 
     const mediumByUuid = new Map();
