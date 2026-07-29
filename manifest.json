@@ -1,0 +1,12 @@
+{
+    "version": 0,
+    "requires": {
+        "cockpit": "150"
+    },
+    "tools": {
+        "index": {
+            "label": "VirtualBox",
+            "path": "index.html"
+        }
+    }
+}
