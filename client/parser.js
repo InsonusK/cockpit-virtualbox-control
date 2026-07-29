@@ -161,7 +161,7 @@ function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutput) {
         const vendorPart = [manufacturer, product].filter(Boolean).join(" ").trim();
         if (vendorPart) label += ` (${vendorPart})`;
         if (vendorId || productId) label += ` [${vendorId}:${productId}]`;
-        usb.push({ label, active });
+        usb.push({ label, active, autoConnect: active });
     }
 
     let sharedFolders = parseSharedFolders(humanInfoOutput);

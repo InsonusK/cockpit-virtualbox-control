@@ -37,7 +37,7 @@ function vmInfoHuman(uuid) {
     return vbox(["showvminfo", uuid]);
 }
 
-const VALID_CONTROL_COMMANDS = new Set(["pause", "resume", "acpipowerbutton", "poweroff"]);
+const VALID_CONTROL_COMMANDS = new Set(["pause", "resume", "acpipowerbutton", "poweroff", "savestate"]);
 
 function controlVm(uuid, command) {
     assertUuid(uuid);

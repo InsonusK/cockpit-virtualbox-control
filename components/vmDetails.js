@@ -57,11 +57,13 @@ function renderDetails(details) {
                 <tr>
                     <th>USB устройство</th>
                     <th>Статус</th>
+                    <th>Автоподключение</th>
                 </tr>
             </thead>
             <tbody>${usb.map(u => `<tr>
                 <td>${escapeHtml(u.label)}</td>
                 <td>${u.active ? "подключено" : "не подключено"}</td>
+                <td>${u.autoConnect ? "да" : "нет"}</td>
             </tr>`).join("")}</tbody>
            </table>`
         : '<p class="empty-msg">Нет USB устройств</p>';

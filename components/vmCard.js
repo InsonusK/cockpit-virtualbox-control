@@ -33,6 +33,7 @@ function buildActionButtons(vm, callbacks) {
 
     if (vm.state === "running") {
         addBtn("Пауза", "", () => callbacks.onControl(vm, "pause"));
+        addBtn("Сохранить состояние", "", () => callbacks.onControl(vm, "savestate"));
         addBtn("ACPI выключение", "", () => callbacks.onControl(vm, "acpipowerbutton"));
         addBtn("Force off", "btn-danger", () => callbacks.onControl(vm, "poweroff"));
     } else if (vm.state === "paused") {
