@@ -2,7 +2,7 @@ import { listSnapshots, takeSnapshot, restoreSnapshot } from "../client/vboxClie
 
 export function registerSnapshotModal(Alpine) {
     Alpine.store("snapshotModal", {
-        open: false,
+        isOpen: false,
         vm: null,
         snapshots: [],
         newName: "",
@@ -26,17 +26,17 @@ export function registerSnapshotModal(Alpine) {
             }
         },
 
-        open(vm, statusCallback) {
+        show(vm, statusCallback) {
             this.vm = vm;
             this.onStatus = statusCallback;
             this.title = "Снапшоты: " + vm.name;
             this.newName = "";
-            this.open = true;
+            this.isOpen = true;
             this.refresh();
         },
 
         close() {
-            this.open = false;
+            this.isOpen = false;
             this.vm = null;
             this.snapshots = [];
             this.newName = "";

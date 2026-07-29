@@ -8,7 +8,7 @@ Cockpit-плагин для управления VirtualBox VM через `VBoxM
 repo-root/
 ├── src/                        # Cockpit-пакет целиком
 │   ├── app.js                  # оркестратор: загрузка partials + старт Alpine
-│   ├── index.html              # каркас + <template> для runtime-шаблонов
+│   ├── index.html              # каркас страницы
 │   ├── style.css
 │   ├── manifest.json
 │   ├── vendor/alpine.min.js    # локальная копия Alpine ESM (без CDN)
@@ -65,12 +65,13 @@ node --test
 - `src/client/parser.js` — чистые функции парсинга вывода `VBoxManage`. Единственный слой, покрытый unit-тестами.
 - `src/client/vboxClient.js` — обёртки над `cockpit.spawn()`. Все вызовы идут с массивами аргументов, без конкатенации shell-строк.
 - `src/components/*.js` — Alpine-компоненты (`Alpine.data` / `Alpine.store`), без HTML-строк внутри JS.
-- `src/partials/*.html` — HTML-шаблоны. Карточка VM и детали VM загружаются как `<template>` до старта Alpine и клонируются в DOM через кастомную директиву `x-partial`.
-- `src/app.js` — оркестратор: регистрирует компоненты и директиву `x-partial`, загружает партиалы, запускает Alpine.
+- `src/partials/*.html` — HTML-шаблоны компонентов. Вложенные шаблоны (карточка и детали VM) подключаются через `<x-include src="...">` и разрешаются `loadPartial` до старта Alpine.
+- `src/app.js` — оркестратор: регистрирует компоненты, загружает партиалы, запускает Alpine.
 
-## Как работают runtime-шаблоны
+## Как работают partials
 
-1. `index.html` содержит пустые `<template id="tpl-vm-card">` и `<template id="tpl-vm-details">`.
-2. `app.js` загружает в них `partials/vm-card.html` и `partials/vm-details.html` до `Alpine.start()`.
-3. В `app.html` список VM рендерится через `x-for`; каждый элемент получает `x-partial="tpl-vm-card"`, которая клонирует содержимое шаблона и вызывает `Alpine.initTree()`.
-4. Внутри карточки детали VM подгружаются аналогично через `x-partial="tpl-vm-details"` только при раскрытии карточки (`x-if="!loadingDetails && details"`).
+1. `loadPartial(path, targetSelector)` загружает HTML-фрагмент по `fetch`.
+2. Перед вставкой в DOM рекурсивно разрешаются все `<x-include src="partials/...">` внутри фрагмента.
+3. `app.js` загружает `partials/app.html` в `#app` и `partials/snapshot-modal.html` в `#modal-container` до вызова `Alpine.start()`.
+4. `partials/app.html` использует `<x-include src="partials/vm-card.html">` внутри `x-for`; карточка, в свою очередь, включает `partials/vm-details.html` для раскрываемой панели деталей.
+5. Таким образом к моменту старта Alpine в DOM уже находится полная разметка, и ручной вызов `Alpine.initTree()` не требуется.

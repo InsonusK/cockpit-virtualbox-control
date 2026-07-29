@@ -63,7 +63,7 @@ export function registerApp(Alpine) {
         },
 
         openSnapshots(vm) {
-            Alpine.store("snapshotModal").open(vm, this.setStatus.bind(this));
+            Alpine.store("snapshotModal").show(vm, this.setStatus.bind(this));
         },
 
         stateLabel,
