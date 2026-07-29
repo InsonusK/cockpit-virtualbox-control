@@ -1,4 +1,4 @@
-import { listSnapshots, takeSnapshot, restoreSnapshot } from "../client/vboxClient.js";
+import { listSnapshots, takeSnapshot, restoreSnapshot } from "../../client/vboxClient.js";
 
 /**
  * Registers the `snapshotModal` Alpine.js store.
