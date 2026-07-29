@@ -26,7 +26,11 @@ repo-root/
 │       ├── vm-card.html        # шаблон карточки VM (runtime-шаблон)
 │       ├── vm-details.html     # шаблон деталей VM (runtime-шаблон)
 │       └── snapshot-modal.html # модалка снапшотов
-├── tests/parser.test.js
+├── tests/
+│   ├── parser.test.js          # unit-тесты парсера VBoxManage
+│   ├── vboxClient.test.js      # моки cockpit.spawn
+│   ├── components.test.js      # моки cockpit + Alpine-компоненты
+│   └── loadPartial.test.js     # моки fetch + document
 ├── README.md
 ├── context.md
 └── Virtualbox_plugin_alpine_migration_spec.md
@@ -58,14 +62,21 @@ ln -s "$(pwd)/src" ~/.local/share/cockpit/virtualbox
 node --test
 ```
 
+Запускает все тесты из директории `tests/`:
+
+- `parser.test.js` — unit-тесты чистых функций парсинга.
+- `vboxClient.test.js` — мокирование `cockpit.spawn()`, проверка аргументов и валидации.
+- `components.test.js` — моки `cockpit` и минимальный стаб Alpine.js для проверки логики компонентов.
+- `loadPartial.test.js` — моки `fetch()` и `document` для механизма подгрузки партиалов.
+
 В Node.js 24 с багом [nodejs/node#64555](https://github.com/nodejs/node/issues/64555) явный аргумент директории (`node --test tests/`) может падать с `MODULE_NOT_FOUND`. Без аргументов `node --test` корректно обнаруживает директорию `tests/` и запускает все тесты.
 
 ## Архитектура
 
-- `src/client/parser.js` — чистые функции парсинга вывода `VBoxManage`. Единственный слой, покрытый unit-тестами.
-- `src/client/vboxClient.js` — обёртки над `cockpit.spawn()`. Все вызовы идут с массивами аргументов, без конкатенации shell-строк.
-- `src/components/*.js` — Alpine-компоненты (`Alpine.data` / `Alpine.store`), без HTML-строк внутри JS.
-- `src/partials/*.html` — HTML-шаблоны компонентов. Вложенные шаблоны (карточка и детали VM) подключаются через `<x-include src="...">` и разрешаются `loadPartial` до старта Alpine.
+- `src/client/parser.js` — чистые функции парсинга вывода `VBoxManage`.
+- `src/client/vboxClient.js` — обёртки над `cockpit.spawn()`. Все вызовы идут с массивами аргументов, без конкатенации shell-строк. Покрыт мок-тестами через подмену глобального `cockpit`.
+- `src/components/*.js` — Alpine-компоненты (`Alpine.data` / `Alpine.store`), без HTML-строк внутри JS. Логика компонентов покрыта мок-тестами без реального DOM и браузера.
+- `src/partials/*.html` — HTML-шаблоны компонентов. Вложенные шаблоны (карточка и детали VM) подключаются через `<x-include src="...">` и разрешаются `loadPartial` до старта Alpine. Механизм `loadPartial` покрыт мок-тестами через подмену `fetch` и `document`.
 - `src/app.js` — оркестратор: регистрирует компоненты, загружает партиалы, запускает Alpine.
 
 ## Как работают partials

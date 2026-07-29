@@ -153,7 +153,7 @@ describe("Alpine components with mocked cockpit", () => {
             await card.init();
 
             assert.equal(card.loadingState, false);
-            assert.equal(vm.state, "running");
+            assert.equal(card.state, "running");
         });
 
         test("init falls back to unknown on state load failure", async () => {
@@ -166,7 +166,7 @@ describe("Alpine components with mocked cockpit", () => {
             await card.init();
 
             assert.equal(card.loadingState, false);
-            assert.equal(vm.state, "unknown");
+            assert.equal(card.state, "unknown");
         });
 
         test("toggleDetails loads and parses VM details", async () => {
@@ -212,11 +212,9 @@ describe("Alpine components with mocked cockpit", () => {
 
             const vm = { name: "Test VM", uuid: UUID };
             const card = alpine.getData("vmCard", vm, app);
-            await card.runControl(vm, "pause");
+            await card.runControl("pause");
 
             assert.equal(controlCalled, true);
-            assert.equal(app.vms.length, 1);
-            assert.equal(app.vms[0].name, "refreshed");
             assert.equal(statusMessages[statusMessages.length - 1].message, "Готово: Test VM");
         });
 
@@ -231,10 +229,9 @@ describe("Alpine components with mocked cockpit", () => {
 
             const vm = { name: "Test VM", uuid: UUID };
             const card = alpine.getData("vmCard", vm, app);
-            await card.runStart(vm, "headless");
+            await card.runStart("headless");
 
             assert.equal(startCalled, true);
-            assert.equal(app.vms.length, 1);
             assert.equal(statusMessages[statusMessages.length - 1].message, "Готово: Test VM");
         });
 
@@ -245,10 +242,9 @@ describe("Alpine components with mocked cockpit", () => {
 
             const vm = { name: "Test VM", uuid: UUID };
             const card = alpine.getData("vmCard", vm, app);
-            await card.runControl(vm, "pause");
+            await card.runControl("pause");
 
             assert.equal(statusMessages.some((m) => m.isError && /VM is locked/.test(m.message)), true);
-            assert.equal(app.vms.length, 1);
         });
 
         test("openSnapshots shows modal for the selected VM", async () => {

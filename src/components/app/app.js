@@ -1,5 +1,5 @@
-import { listVms, vmInfo, controlVm, startVm } from "../../client/vboxClient.js";
-import { parseVmList, parseVmState } from "../../client/parser.js";
+import { listVms } from "../../client/vboxClient.js";
+import { parseVmList } from "../../client/parser.js";
 
 
 /**
@@ -18,26 +18,14 @@ export function registerApp(Alpine) {
             this.status = { message: message || "", isError };
         },
 
-        /** Loads the VM list and refreshes each VM's state. */
+        /** Loads the VM list. */
         async loadVms() {
             if (this.loading) return;
             this.loading = true;
             this.setStatus("Загрузка...");
             try {
                 const listOutput = await listVms();
-                const vms = parseVmList(listOutput);
-
-                const withState = await Promise.all(vms.map(async (vm) => {
-                    try {
-                        const info = await vmInfo(vm.uuid);
-                        vm.state = parseVmState(info);
-                    } catch (e) {
-                        vm.state = "unknown";
-                    }
-                    return vm;
-                }));
-
-                this.vms = withState;
+                this.vms = parseVmList(listOutput);
                 this.setStatus("Обновлено: " + new Date().toLocaleTimeString());
             } catch (e) {
                 this.setStatus("Ошибка: " + (e.message || e), true);
@@ -46,7 +34,6 @@ export function registerApp(Alpine) {
                 this.loading = false;
             }
         },
-        
 
         /** Called by Alpine when the component is initialized. */
         init() {

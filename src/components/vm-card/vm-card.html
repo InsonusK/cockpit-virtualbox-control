@@ -2,29 +2,39 @@
     <div class="vm-info">
         <span class="vm-name" x-text="vm.name"></span>
         <span class="vm-state">
-            <span class="dot" :class="stateDotClass(vm.state)"></span>
-            <span x-text="stateLabel(vm.state)"></span>
+            <template x-if="loadingState">
+                <span>
+                    <span class="dot dot-off"></span>
+                    <span>Загрузка...</span>
+                </span>
+            </template>
+            <template x-if="!loadingState">
+                <span>
+                    <span class="dot" :class="stateDotClass(vm.state)"></span>
+                    <span x-text="stateLabel(vm.state)"></span>
+                </span>
+            </template>
         </span>
     </div>
     <div class="vm-actions">
         <template x-if="vm.state === 'running'">
             <span>
-                <button class="btn btn-small" @click.stop="runControl(vm, 'pause')">Пауза</button>
-                <button class="btn btn-small" @click.stop="runControl(vm, 'savestate')">Сохранить состояние</button>
-                <button class="btn btn-small" @click.stop="runControl(vm, 'acpipowerbutton')">ACPI выключение</button>
-                <button class="btn btn-small btn-danger" @click.stop="runControl(vm, 'poweroff')">Force off</button>
+                <button class="btn btn-small" @click.stop="runControl('pause')">Пауза</button>
+                <button class="btn btn-small" @click.stop="runControl('savestate')">Сохранить состояние</button>
+                <button class="btn btn-small" @click.stop="runControl('acpipowerbutton')">ACPI выключение</button>
+                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="vm.state === 'paused'">
             <span>
-                <button class="btn btn-small" @click.stop="runControl(vm, 'resume')">Продолжить</button>
-                <button class="btn btn-small btn-danger" @click.stop="runControl(vm, 'poweroff')">Force off</button>
+                <button class="btn btn-small" @click.stop="runControl('resume')">Продолжить</button>
+                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="vm.state !== 'running' && vm.state !== 'paused'">
             <span>
-                <button class="btn btn-small" @click.stop="runStart(vm, 'headless')">Запустить (headless)</button>
-                <button class="btn btn-small" @click.stop="runStart(vm, 'gui')">Запустить (GUI)</button>
+                <button class="btn btn-small" @click.stop="runStart('headless')">Запустить (headless)</button>
+                <button class="btn btn-small" @click.stop="runStart('gui')">Запустить (GUI)</button>
             </span>
         </template>
         <button class="btn btn-small btn-secondary" @click.stop="openSnapshots(vm)">Снапшоты</button>
