@@ -13,7 +13,7 @@
 <div id="vm-list">
     <template x-for="vm in vms" :key="vm.uuid">
         <div class="vm-card" x-data="vmCard(vm, $data)">
-            <x-include src="partials/vm-card.html?v=2"></x-include>
+            <x-include src="partials/vm-card.html"></x-include>
         </div>
     </template>
 </div>

@@ -34,7 +34,7 @@
     <p class="empty-msg" x-show="loadingDetails">Загрузка деталей...</p>
     <template x-if="!loadingDetails && details">
         <div class="vm-details-content">
-            <x-include src="partials/vm-details.html?v=2"></x-include>
+            <x-include src="partials/vm-details.html"></x-include>
         </div>
     </template>
     <p class="empty-msg" x-show="!loadingDetails && !details">Не удалось загрузить детали</p>
