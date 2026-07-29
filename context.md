@@ -90,5 +90,5 @@ repo-root/
 - В текущем окружении **нет Node.js**, поэтому шаг запуска тестов невозможен до создания devcontainer. Тесты всё равно нужно написать.
 
 ## Ссылки
-- Постановка: `Virtualbox plugin alpine migration spec.md`
+- Постановка: `Virtualbox_plugin_alpine_migration_spec.md`
 - Одобренный план: `/home/insonusk/.kimi-code/sessions/wd_virtualbox_c0bd26ae598a/session_2ba922e9-1d4a-4761-8881-3d7c2701d0b3/agents/main/plans/crystal-luke-cage-she-hulk.md`
