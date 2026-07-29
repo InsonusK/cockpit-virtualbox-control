@@ -53,8 +53,16 @@ function renderDetails(details) {
 
     const usbHtml = usb.length
         ? `<table class="detail-table">
-            <thead><tr><th>USB устройство</th></tr></thead>
-            <tbody>${usb.map(u => `<tr><td>${escapeHtml(u)}</td></tr>`).join("")}</tbody>
+            <thead>
+                <tr>
+                    <th>USB устройство</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>${usb.map(u => `<tr>
+                <td>${escapeHtml(u.label)}</td>
+                <td>${u.active ? "подключено" : "не подключено"}</td>
+            </tr>`).join("")}</tbody>
            </table>`
         : '<p class="empty-msg">Нет USB устройств</p>';
 
