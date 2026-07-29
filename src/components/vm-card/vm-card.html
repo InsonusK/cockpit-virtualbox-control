@@ -10,14 +10,14 @@
             </template>
             <template x-if="!loadingState">
                 <span>
-                    <span class="dot" :class="stateDotClass(vm.state)"></span>
-                    <span x-text="stateLabel(vm.state)"></span>
+                    <span class="dot" :class="stateDotClass(state)"></span>
+                    <span x-text="stateLabel(state)"></span>
                 </span>
             </template>
         </span>
     </div>
     <div class="vm-actions">
-        <template x-if="vm.state === 'running'">
+        <template x-if="isRunning()">
             <span>
                 <button class="btn btn-small" @click.stop="runControl('pause')">Пауза</button>
                 <button class="btn btn-small" @click.stop="runControl('savestate')">Сохранить состояние</button>
@@ -25,13 +25,13 @@
                 <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
-        <template x-if="vm.state === 'paused'">
+        <template x-if="isPaused()">
             <span>
                 <button class="btn btn-small" @click.stop="runControl('resume')">Продолжить</button>
                 <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
-        <template x-if="vm.state !== 'running' && vm.state !== 'paused'">
+        <template x-if="isOff()">
             <span>
                 <button class="btn btn-small" @click.stop="runStart('headless')">Запустить (headless)</button>
                 <button class="btn btn-small" @click.stop="runStart('gui')">Запустить (GUI)</button>

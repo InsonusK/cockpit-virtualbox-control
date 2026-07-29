@@ -110,6 +110,15 @@ export function registerVmCard(Alpine) {
         },
 
         stateLabel,
-        stateDotClass
+        stateDotClass,
+        isRunning(){
+            return this.state === 'running'
+        },
+        isPaused(){
+            return this.state === 'paused'
+        },
+        isOff(){
+            return this.state === 'poweroff' || this.state === 'saved' || this.state === 'aborted'
+        }
     }));
 }
