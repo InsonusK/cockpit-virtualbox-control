@@ -1,0 +1,51 @@
+<div class="vm-header" @click="toggleDetails" title="Нажмите для просмотра деталей">
+    <div class="vm-info">
+        <span class="vm-name" x-text="vm.name"></span>
+        <span class="vm-state">
+            <template x-if="loadingState">
+                <span>
+                    <span class="dot dot-off"></span>
+                    <span>Загрузка...</span>
+                </span>
+            </template>
+            <template x-if="!loadingState">
+                <span>
+                    <span class="dot" :class="stateDotClass(state)"></span>
+                    <span x-text="stateLabel(state)"></span>
+                </span>
+            </template>
+        </span>
+    </div>
+    <div class="vm-actions">
+        <template x-if="isRunning()">
+            <span>
+                <button class="btn btn-small" @click.stop="runControl('pause')">Пауза</button>
+                <button class="btn btn-small" @click.stop="runControl('savestate')">Сохранить состояние</button>
+                <button class="btn btn-small" @click.stop="runControl('acpipowerbutton')">ACPI выключение</button>
+                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
+            </span>
+        </template>
+        <template x-if="isPaused()">
+            <span>
+                <button class="btn btn-small" @click.stop="runControl('resume')">Продолжить</button>
+                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
+            </span>
+        </template>
+        <template x-if="isOff()">
+            <span>
+                <button class="btn btn-small" @click.stop="runStart('headless')">Запустить (headless)</button>
+                <button class="btn btn-small" @click.stop="runStart('gui')">Запустить (GUI)</button>
+            </span>
+        </template>
+        <button class="btn btn-small btn-secondary" @click.stop="openSnapshots()">Снапшоты</button>
+    </div>
+</div>
+<div class="vm-details" x-show="expanded" x-cloak>
+    <p class="empty-msg" x-show="loadingDetails">Загрузка деталей...</p>
+    <template x-if="!loadingDetails && details">
+        <div class="vm-details-content">
+            <x-include src="components/vm-details/vm-details.html"></x-include>
+        </div>
+    </template>
+    <p class="empty-msg" x-show="!loadingDetails && !details">Не удалось загрузить детали</p>
+</div>

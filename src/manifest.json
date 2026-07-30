@@ -5,7 +5,7 @@
     },
     "tools": {
         "index": {
-            "label": "VirtualBox",
+            "label": "VirtualBox (dev)",
             "path": "index.html"
         }
     }

@@ -1,0 +1,19 @@
+<header>
+    <h1>VirtualBox</h1>
+    <div class="header-actions">
+        <span id="status-msg" :class="{ 'status-error': status.isError }" x-text="status.message"></span>
+        <button id="refresh-btn" class="btn" @click="loadVms" :disabled="loading">Обновить</button>
+    </div>
+</header>
+
+<template x-if="vms.length === 0 && !loading">
+    <p class="empty-msg">Виртуальные машины не найдены.</p>
+</template>
+
+<div id="vm-list">
+    <template x-for="vm in vms" :key="vm.uuid">
+        <div class="vm-card" x-data="vmCard(vm, $data)">
+            <x-include src="components/vm-card/vm-card.html"></x-include>
+        </div>
+    </template>
+</div>
