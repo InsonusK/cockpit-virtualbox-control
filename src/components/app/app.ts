@@ -1,20 +1,26 @@
-import { listVms } from "../../client/vboxClient.js";
-import { parseVmList } from "../../client/parser.js";
+import { listVms } from "../../client/vboxClient.ts";
+import { parseVmList } from "../../client/parser.ts";
+import type { Vm } from "../../client/types.ts";
+import type { AlpineStatic } from "../../vendor/alpine.min.js";
 
+export interface AppData {
+    vms: Vm[];
+    status: { message: string; isError: boolean };
+    loading: boolean;
+    setStatus(message: string, isError?: boolean): void;
+    loadVms(): Promise<void>;
+    init(): void;
+}
 
-/**
- * Registers the main `app` Alpine.js data component.
- *
- * @param {Object} Alpine — Alpine.js instance.
- */
-export function registerApp(Alpine) {
-    Alpine.data("app", () => ({
+/** Registers the main `app` Alpine.js data component. */
+export function registerApp(Alpine: AlpineStatic): void {
+    Alpine.data("app", (): AppData => ({
         vms: [],
         status: { message: "Загрузка...", isError: false },
         loading: false,
 
         /** Updates the current status message shown in the UI. */
-        setStatus(message, isError = false) {
+        setStatus(message: string, isError = false) {
             this.status = { message: message || "", isError };
         },
 
@@ -27,7 +33,7 @@ export function registerApp(Alpine) {
                 const listOutput = await listVms();
                 this.vms = parseVmList(listOutput);
                 this.setStatus("Обновлено: " + new Date().toLocaleTimeString());
-            } catch (e) {
+            } catch (e: any) {
                 this.setStatus("Ошибка: " + (e.message || e), true);
                 this.vms = [];
             } finally {

@@ -1,0 +1,58 @@
+name: Release compiled JS to master
+
+# Fires once, right after a release PR into `master` is merged. Deliberately
+# NOT `on: push: branches: [master]` — this job's own commit is a push to
+# master too, and a push-trigger would re-fire on itself forever. A merged
+# pull_request event only happens once per PR, so there's no loop.
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-commit:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          # RELEASE_BOT_TOKEN belongs to an actor on master's branch-protection
+          # bypass list (see README "Релиз в master") - required because the
+          # commit below is pushed straight to a PR-only-protected branch.
+          token: ${{ secrets.RELEASE_BOT_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Replace working tree with build output
+        run: |
+          set -euo pipefail
+          find . -mindepth 1 -maxdepth 1 ! -name '.git' ! -name 'dist' -exec rm -rf {} +
+          mv dist/* .
+          rmdir dist
+
+      - name: Commit and push compiled output
+        run: |
+          set -euo pipefail
+          git config user.name "release-bot"
+          git config user.email "release-bot@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes to publish, skipping commit."
+            exit 0
+          fi
+          git commit -m "build: compile TS -> JS for release #${{ github.event.pull_request.number }}"
+          git push origin HEAD:master

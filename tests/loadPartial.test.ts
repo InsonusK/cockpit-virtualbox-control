@@ -1,17 +1,20 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { loadPartial } from "../src/tools/loadPartial.js";
+import { loadPartial } from "../src/tools/loadPartial.ts";
+
+/** Untyped view of globalThis for stubbing `document`/`fetch` in tests. */
+const domGlobal = globalThis as any;
 
 describe("loadPartial with mocked DOM and fetch", () => {
-    let fetchCalls;
-    let targets;
+    let fetchCalls: string[];
+    let targets: Record<string, { innerHTML: string }>;
 
     beforeEach(() => {
         fetchCalls = [];
         targets = {};
 
-        globalThis.document = {
-            querySelector(selector) {
+        domGlobal.document = {
+            querySelector(selector: string) {
                 if (!targets[selector]) {
                     targets[selector] = { innerHTML: "" };
                 }
@@ -20,7 +23,7 @@ describe("loadPartial with mocked DOM and fetch", () => {
         };
 
         let counter = 0;
-        globalThis.fetch = async (path) => {
+        domGlobal.fetch = async (path: string) => {
             fetchCalls.push(path);
             const uniquePath = `${path}?t=${++counter}`;
 
@@ -51,8 +54,8 @@ describe("loadPartial with mocked DOM and fetch", () => {
     });
 
     afterEach(() => {
-        delete globalThis.document;
-        delete globalThis.fetch;
+        delete domGlobal.document;
+        delete domGlobal.fetch;
     });
 
     test("loads a partial into the target element", async () => {
@@ -71,8 +74,8 @@ describe("loadPartial with mocked DOM and fetch", () => {
     });
 
     test("throws when target element is missing", async () => {
-        delete globalThis.document;
-        globalThis.document = { querySelector: () => null };
+        delete domGlobal.document;
+        domGlobal.document = { querySelector: () => null };
 
         await assert.rejects(
             () => loadPartial("partials/app.html", "#missing"),

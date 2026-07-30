@@ -1,6 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import { parseMediumList, parseVmDetails } from "../src/client/parser.js";
+import { parseMediumList, parseVmDetails } from "../src/client/parser.ts";
 
 describe("parseMediumList with real VBoxManage list hdds output", () => {
     test("parses Capacity and Encryption fields", () => {

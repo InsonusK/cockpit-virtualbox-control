@@ -1,40 +1,46 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { registerApp } from "../src/components/app/app.js";
-import { registerVmCard } from "../src/components/vm-card/vm-card.js";
-import { registerSnapshotModal } from "../src/components/snapshot-modal/snapshot-modal.js";
+import { registerApp } from "../src/components/app/app.ts";
+import { registerVmCard } from "../src/components/vm-card/vm-card.ts";
+import { registerSnapshotModal } from "../src/components/snapshot-modal/snapshot-modal.ts";
 
 const UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
+/** Untyped view of globalThis for stubbing the `cockpit` global in tests. */
+const cockpitGlobal = globalThis as any;
+
 /**
  * Minimal stand-in for Alpine.js that lets us inspect registered data
- * functions and stores without a real DOM.
+ * functions and stores without a real DOM. Returned as `any` — it's test-only
+ * scaffolding, not something worth fighting Alpine's `this`-bound typing for.
  */
-function createAlpine() {
-    const dataFns = {};
-    const stores = {};
+function createAlpine(): any {
+    const dataFns: Record<string, (...args: any[]) => any> = {};
+    const stores: Record<string, any> = {};
     return {
-        data(name, fn) {
+        data(name: string, fn: (...args: any[]) => any) {
             dataFns[name] = fn;
         },
-        store(name, value) {
+        store(name: string, value?: any) {
             if (value !== undefined) {
                 stores[name] = value;
                 return stores[name];
             }
             return stores[name];
         },
-        getData(name, ...args) {
+        start() {},
+        getData(name: string, ...args: any[]) {
             return dataFns[name](...args);
         },
-        getStore(name) {
+        getStore(name: string) {
             return stores[name];
         },
     };
 }
 
 function createDeferred() {
-    let resolve, reject;
+    let resolve!: (value?: any) => void;
+    let reject!: (reason?: any) => void;
     const promise = new Promise((res, rej) => {
         resolve = res;
         reject = rej;
@@ -42,14 +48,10 @@ function createDeferred() {
     return { promise, resolve, reject };
 }
 
-/**
- * Creates a mock cockpit.spawn that records calls and returns canned responses.
- *
- * @param {Object} responses — map from joined VBoxManage args to output.
- */
-function createMockSpawn(responses) {
-    const calls = [];
-    function spawn(args, opts) {
+/** Creates a mock cockpit.spawn that records calls and returns canned responses. */
+function createMockSpawn(responses: Record<string, string>) {
+    const calls: { args: string[]; opts: any }[] = [];
+    function spawn(args: string[], opts?: any) {
         calls.push({ args, opts });
         const key = args.slice(1).join(" ");
         return Promise.resolve(responses[key] ?? "");
@@ -59,9 +61,9 @@ function createMockSpawn(responses) {
 }
 
 describe("Alpine components with mocked cockpit", () => {
-    let alpine;
-    let app;
-    let statusMessages;
+    let alpine: any;
+    let app: any;
+    let statusMessages: { message: string; isError: boolean }[];
 
     beforeEach(() => {
         alpine = createAlpine();
@@ -75,19 +77,19 @@ describe("Alpine components with mocked cockpit", () => {
             async loadVms() {
                 this.vms.push({ name: "refreshed" });
             },
-            setStatus(message, isError = false) {
+            setStatus(message: string, isError = false) {
                 statusMessages.push({ message, isError });
             },
         };
     });
 
     afterEach(() => {
-        delete globalThis.cockpit;
+        delete cockpitGlobal.cockpit;
     });
 
     describe("app", () => {
         test("loadVms populates VM list with name and uuid", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     "list vms": `"Test VM" {${UUID}}\n`,
                 }),
@@ -106,7 +108,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("loadVms does not fetch per-VM state", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     "list vms": `"Test VM" {${UUID}}\n`,
                 }),
@@ -117,13 +119,13 @@ describe("Alpine components with mocked cockpit", () => {
 
             assert.equal(instance.vms.length, 1);
             assert.equal(
-                globalThis.cockpit.spawn.calls.some((c) => c.args[1] === "showvminfo"),
+                cockpitGlobal.cockpit.spawn.calls.some((c: any) => c.args[1] === "showvminfo"),
                 false,
             );
         });
 
         test("loadVms shows error on list failure", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: () => Promise.reject(new Error("VBoxManage failed")),
             };
 
@@ -137,7 +139,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("loadVms is skipped while already loading", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({ "list vms": "" }),
             };
 
@@ -145,13 +147,13 @@ describe("Alpine components with mocked cockpit", () => {
             instance.loading = true;
             await instance.loadVms();
 
-            assert.equal(globalThis.cockpit.spawn.calls.length, 0);
+            assert.equal(cockpitGlobal.cockpit.spawn.calls.length, 0);
         });
     });
 
     describe("vmCard", () => {
         test("init loads and parses VM state", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     [`showvminfo ${UUID} --machinereadable`]: 'VMState="running"\n',
                 }),
@@ -166,7 +168,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("init falls back to unknown on state load failure", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: () => Promise.reject(new Error("locked")),
             };
 
@@ -179,7 +181,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("toggleDetails loads and parses VM details", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     [`showvminfo ${UUID} --machinereadable`]: 'name="Test VM"\ncpus="2"\nmemory="4096"\n',
                     "list hdds": "",
@@ -212,8 +214,8 @@ describe("Alpine components with mocked cockpit", () => {
 
         test("runControl calls controlvm and refreshes VM list", async () => {
             let controlCalled = false;
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     if (args[1] === "controlvm") controlCalled = true;
                     return Promise.resolve("");
                 },
@@ -229,8 +231,8 @@ describe("Alpine components with mocked cockpit", () => {
 
         test("runStart calls startvm and refreshes VM list", async () => {
             let startCalled = false;
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     if (args[1] === "startvm") startCalled = true;
                     return Promise.resolve("");
                 },
@@ -245,7 +247,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("runControl reports errors via app.setStatus", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: () => Promise.reject(new Error("VM is locked")),
             };
 
@@ -258,8 +260,8 @@ describe("Alpine components with mocked cockpit", () => {
 
         test("runControl disables UI and marks the command as active while in progress", async () => {
             const deferred = createDeferred();
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     if (args[1] === "controlvm") return deferred.promise;
                     return Promise.resolve('VMState="running"\n');
                 },
@@ -281,8 +283,8 @@ describe("Alpine components with mocked cockpit", () => {
 
         test("runStart disables UI and marks the start type as active while in progress", async () => {
             const deferred = createDeferred();
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     if (args[1] === "startvm") return deferred.promise;
                     return Promise.resolve('VMState="running"\n');
                 },
@@ -303,7 +305,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("openSnapshots shows modal for the selected VM", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     [`snapshot ${UUID} list --machinereadable`]: 'SnapshotName="base"\nSnapshotName-1="after-update"\n',
                 }),
@@ -329,7 +331,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("show loads snapshots and resets name", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     [`snapshot ${UUID} list --machinereadable`]: 'SnapshotName="base"\n',
                 }),
@@ -347,7 +349,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("show handles empty snapshot list without error", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: () => Promise.reject(""),
             };
 
@@ -364,9 +366,9 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("take creates snapshot and refreshes list", async () => {
-            const calls = [];
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            const calls: string[] = [];
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     calls.push(args.slice(1).join(" "));
                     return Promise.resolve("");
                 },
@@ -385,7 +387,7 @@ describe("Alpine components with mocked cockpit", () => {
 
         test("take ignores empty name", async () => {
             let called = false;
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: () => {
                     called = true;
                     return Promise.resolve("");
@@ -401,9 +403,9 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("restore restores snapshot and refreshes list", async () => {
-            const calls = [];
-            globalThis.cockpit = {
-                spawn: (args, opts) => {
+            const calls: string[] = [];
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
                     calls.push(args.slice(1).join(" "));
                     return Promise.resolve("");
                 },
@@ -419,7 +421,7 @@ describe("Alpine components with mocked cockpit", () => {
         });
 
         test("close resets modal state", async () => {
-            globalThis.cockpit = {
+            cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({
                     [`snapshot ${UUID} list --machinereadable`]: 'SnapshotName="base"\n',
                 }),

@@ -1,12 +1,7 @@
 const UUID_RE = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-/**
- * Validates that a string is a UUID.
- *
- * @param {string} uuid — UUID to validate.
- * @throws {Error} if the UUID format is invalid.
- */
-function assertUuid(uuid) {
+/** Validates that a string is a UUID. */
+function assertUuid(uuid: string): void {
     if (!UUID_RE.test(uuid)) {
         throw new Error("Invalid VM UUID: " + uuid);
     }
@@ -16,12 +11,8 @@ function assertUuid(uuid) {
  * Runs `VBoxManage` through `cockpit.spawn` with a fixed environment.
  *
  * All public functions must pass arguments as an array to avoid shell injection.
- *
- * @param {string[]} args — arguments for `VBoxManage`.
- * @returns {Promise<string>} promise resolving with command output.
- * @throws {Error} if `cockpit` global is missing.
  */
-function vbox(args) {
+function vbox(args: string[]): Promise<string> {
     if (typeof cockpit === "undefined") {
         throw new Error("cockpit is not available: ensure the plugin is opened from Cockpit and ../base1/cockpit.js is loaded");
     }
@@ -31,54 +22,37 @@ function vbox(args) {
     });
 }
 
-/** @returns {Promise<string>} list of VMs in `"Name" {uuid}` format. */
-export function listVms() {
+/** Lists VMs in `"Name" {uuid}` format. */
+export function listVms(): Promise<string> {
     return vbox(["list", "vms"]);
 }
 
-/** @returns {Promise<string>} list of registered hard disk images. */
-export function listHdds() {
+/** Lists registered hard disk images. */
+export function listHdds(): Promise<string> {
     return vbox(["list", "hdds"]);
 }
 
-/** @returns {Promise<string>} list of registered DVD images. */
-export function listDvds() {
+/** Lists registered DVD images. */
+export function listDvds(): Promise<string> {
     return vbox(["list", "dvds"]);
 }
 
-/**
- * Returns machinereadable info for a VM.
- *
- * @param {string} uuid — VM UUID.
- * @returns {Promise<string>} machinereadable `showvminfo` output.
- */
-export function vmInfo(uuid) {
+/** Returns machinereadable info for a VM. */
+export function vmInfo(uuid: string): Promise<string> {
     assertUuid(uuid);
     return vbox(["showvminfo", uuid, "--machinereadable"]);
 }
 
-/**
- * Returns human-readable info for a VM.
- *
- * @param {string} uuid — VM UUID.
- * @returns {Promise<string>} human-readable `showvminfo` output.
- */
-export function vmInfoHuman(uuid) {
+/** Returns human-readable info for a VM. */
+export function vmInfoHuman(uuid: string): Promise<string> {
     assertUuid(uuid);
     return vbox(["showvminfo", uuid]);
 }
 
 const VALID_CONTROL_COMMANDS = new Set(["pause", "resume", "acpipowerbutton", "poweroff", "savestate"]);
 
-/**
- * Sends a control command to a running VM.
- *
- * @param {string} uuid — VM UUID.
- * @param {string} command — one of "pause", "resume", "acpipowerbutton", "poweroff", "savestate".
- * @returns {Promise<string>} command output.
- * @throws {Error} if the command is not allowed.
- */
-export function controlVm(uuid, command) {
+/** Sends a control command to a running VM. */
+export function controlVm(uuid: string, command: string): Promise<string> {
     assertUuid(uuid);
     if (!VALID_CONTROL_COMMANDS.has(command)) {
         throw new Error("Invalid VM control command: " + command);
@@ -88,15 +62,8 @@ export function controlVm(uuid, command) {
 
 const VALID_START_TYPES = new Set(["headless", "gui"]);
 
-/**
- * Starts a VM in the requested mode.
- *
- * @param {string} uuid — VM UUID.
- * @param {string} type — "headless" or "gui".
- * @returns {Promise<string>} command output.
- * @throws {Error} if the start type is invalid.
- */
-export function startVm(uuid, type) {
+/** Starts a VM in the requested mode ("headless" or "gui"). */
+export function startVm(uuid: string, type: string): Promise<string> {
     assertUuid(uuid);
     if (!VALID_START_TYPES.has(type)) {
         throw new Error("Invalid VM start type: " + type);
@@ -111,11 +78,8 @@ export function startVm(uuid, type) {
  * condition, but depending on the version/exit-code path it may arrive as a
  * rejected promise with an empty or informational message. Treat both cases as
  * an empty snapshot list instead of an error.
- *
- * @param {string} uuid — VM UUID.
- * @returns {Promise<string>} snapshot list output.
  */
-export function listSnapshots(uuid) {
+export function listSnapshots(uuid: string): Promise<string> {
     assertUuid(uuid);
     return vbox(["snapshot", uuid, "list", "--machinereadable"])
         .then((output) => {
@@ -124,7 +88,7 @@ export function listSnapshots(uuid) {
             }
             return output;
         })
-        .catch((e) => {
+        .catch((e: any) => {
             const msg = (e && e.message) || String(e);
             if (!msg || /does not have any snapshots/i.test(msg)) {
                 return "";
@@ -133,15 +97,8 @@ export function listSnapshots(uuid) {
         });
 }
 
-/**
- * Creates a new snapshot for a VM.
- *
- * @param {string} uuid — VM UUID.
- * @param {string} name — snapshot name.
- * @returns {Promise<string>} command output.
- * @throws {Error} if the snapshot name is empty.
- */
-export function takeSnapshot(uuid, name) {
+/** Creates a new snapshot for a VM. */
+export function takeSnapshot(uuid: string, name: string): Promise<string> {
     assertUuid(uuid);
     if (!name || !name.trim()) {
         throw new Error("Snapshot name is empty");
@@ -149,15 +106,8 @@ export function takeSnapshot(uuid, name) {
     return vbox(["snapshot", uuid, "take", name.trim()]);
 }
 
-/**
- * Restores a VM to the specified snapshot.
- *
- * @param {string} uuid — VM UUID.
- * @param {string} name — snapshot name.
- * @returns {Promise<string>} command output.
- * @throws {Error} if the snapshot name is empty.
- */
-export function restoreSnapshot(uuid, name) {
+/** Restores a VM to the specified snapshot. */
+export function restoreSnapshot(uuid: string, name: string): Promise<string> {
     assertUuid(uuid);
     if (!name || !name.trim()) {
         throw new Error("Snapshot name is empty");
