@@ -25,6 +25,8 @@ export function registerVmCard(Alpine) {
         details: null,
         loadingDetails: false,
         loadingState: false,
+        processing: false,
+        activeCommand: "",
 
         formatFlag,
 
@@ -82,6 +84,8 @@ export function registerVmCard(Alpine) {
 
         /** Sends a controlvm command for the selected VM and refreshes the list. */
         runControl(command) {
+            this.processing = true;
+            this.activeCommand = command;
             app.setStatus(`Выполняется: controlvm ${command}...`);
             return controlVm(this.vm.uuid, command)
                 .then(() => {
@@ -91,6 +95,8 @@ export function registerVmCard(Alpine) {
                     app.setStatus("Ошибка: " + (e.message || e), true);
                 })
                 .finally(() => {
+                    this.processing = false;
+                    this.activeCommand = "";
                     // Return the promise so runControl's caller can wait for the
                     // state refresh to finish, even though loadState yields no value.
                     return this.loadState();
@@ -99,6 +105,8 @@ export function registerVmCard(Alpine) {
 
         /** Starts the selected VM in headless or GUI mode and refreshes the list. */
         runStart(type) {
+            this.processing = true;
+            this.activeCommand = `start:${type}`;
             app.setStatus(`Выполняется: startvm --type ${type}...`);
             return startVm(this.vm.uuid, type)
                 .then(() => {
@@ -108,6 +116,8 @@ export function registerVmCard(Alpine) {
                     app.setStatus("Ошибка: " + (e.message || e), true);
                 })
                 .finally(() => {
+                    this.processing = false;
+                    this.activeCommand = "";
                     // Return the promise so runStart's caller can wait for the
                     // state refresh to finish, even though loadState yields no value.
                     return this.loadState();
