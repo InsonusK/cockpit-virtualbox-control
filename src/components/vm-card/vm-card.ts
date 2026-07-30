@@ -5,19 +5,47 @@ import {
     listDvds,
     controlVm,
     startVm,
-} from "../../client/vboxClient.js";
-import { parseVmDetails, parseVmState } from "../../client/parser.js";
-import { formatFlag } from "../../tools/utils.js";
-import { stateLabel, stateDotClass } from "../../tools/utils.js";
+} from "../../client/vboxClient.ts";
+import { parseVmDetails, parseVmState } from "../../client/parser.ts";
+import { formatFlag, stateLabel, stateDotClass } from "../../tools/utils.ts";
+import type { Vm, VmDetails } from "../../client/types.ts";
+import type { AlpineStatic } from "../../vendor/alpine.min.js";
 
 const unknown_state = "unknown";
-/**
- * Registers the `vmCard` Alpine.js data component for a single VM card.
- *
- * @param {Object} Alpine — Alpine.js instance.
- */
-export function registerVmCard(Alpine) {
-    Alpine.data("vmCard", (vm, app) => ({
+
+interface AppHandle {
+    setStatus(message: string, isError?: boolean): void;
+}
+
+export interface VmCardData {
+    vm: Vm;
+    app: AppHandle;
+    state: string;
+    expanded: boolean;
+    details: VmDetails | null;
+    loadingDetails: boolean;
+    loadingState: boolean;
+    processing: boolean;
+    activeCommand: string;
+
+    formatFlag: typeof formatFlag;
+    stateLabel: typeof stateLabel;
+    stateDotClass: typeof stateDotClass;
+
+    init(): Promise<void>;
+    loadState(): Promise<void>;
+    toggleDetails(): Promise<void>;
+    runControl(command: string): Promise<void>;
+    runStart(type: string): Promise<void>;
+    openSnapshots(): void;
+    isRunning(): boolean;
+    isPaused(): boolean;
+    isOff(): boolean;
+}
+
+/** Registers the `vmCard` Alpine.js data component for a single VM card. */
+export function registerVmCard(Alpine: AlpineStatic): void {
+    Alpine.data("vmCard", (vm: Vm, app: AppHandle): VmCardData => ({
         vm,
         app,
         state: unknown_state,
@@ -41,7 +69,7 @@ export function registerVmCard(Alpine) {
             try {
                 const info = await vmInfo(vm.uuid);
                 this.state = parseVmState(info);
-            } catch (e) {
+            } catch (e: any) {
                 this.state = unknown_state;
                 console.warn("loadState failed for", vm.uuid, e.message || e);
             } finally {
@@ -69,12 +97,12 @@ export function registerVmCard(Alpine) {
                 let humanInfo = "";
                 try {
                     humanInfo = await vmInfoHuman(vm.uuid);
-                } catch (e) {
+                } catch (e: any) {
                     console.warn("vmInfoHuman failed for", vm.uuid, e.message || e);
                 }
 
                 this.details = parseVmDetails(info, hdds, dvds, humanInfo);
-            } catch (e) {
+            } catch (e: any) {
                 app.setStatus("Ошибка: " + (e.message || e), true);
                 this.details = null;
             } finally {
@@ -83,7 +111,7 @@ export function registerVmCard(Alpine) {
         },
 
         /** Sends a controlvm command for the selected VM and refreshes the list. */
-        runControl(command) {
+        runControl(command: string) {
             this.processing = true;
             this.activeCommand = command;
             app.setStatus(`Выполняется: controlvm ${command}...`);
@@ -91,7 +119,7 @@ export function registerVmCard(Alpine) {
                 .then(() => {
                     app.setStatus(`Готово: ${this.vm.name}`);
                 })
-                .catch((e) => {
+                .catch((e: any) => {
                     app.setStatus("Ошибка: " + (e.message || e), true);
                 })
                 .finally(() => {
@@ -104,7 +132,7 @@ export function registerVmCard(Alpine) {
         },
 
         /** Starts the selected VM in headless or GUI mode and refreshes the list. */
-        runStart(type) {
+        runStart(type: string) {
             this.processing = true;
             this.activeCommand = `start:${type}`;
             app.setStatus(`Выполняется: startvm --type ${type}...`);
@@ -112,7 +140,7 @@ export function registerVmCard(Alpine) {
                 .then(() => {
                     app.setStatus(`Готово: ${this.vm.name}`);
                 })
-                .catch((e) => {
+                .catch((e: any) => {
                     app.setStatus("Ошибка: " + (e.message || e), true);
                 })
                 .finally(() => {
@@ -131,14 +159,14 @@ export function registerVmCard(Alpine) {
 
         stateLabel,
         stateDotClass,
-        isRunning(){
-            return this.state === 'running'
+        isRunning() {
+            return this.state === "running";
         },
-        isPaused(){
-            return this.state === 'paused'
+        isPaused() {
+            return this.state === "paused";
         },
-        isOff(){
-            return this.state === 'poweroff' || this.state === 'saved' || this.state === 'aborted'
-        }
+        isOff() {
+            return this.state === "poweroff" || this.state === "saved" || this.state === "aborted";
+        },
     }));
 }

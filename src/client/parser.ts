@@ -1,14 +1,13 @@
+import type { Vm, VmDetails, MediumInfo, NetworkAdapter, MediaItem, UsbFilter, SharedFolder } from "./types.ts";
+
 /**
  * Parses `VBoxManage list vms` output.
  *
  * Each line like `"VM Name" {uuid}` becomes an object `{ name, uuid }`.
  * Escaped quotes inside VM names are unescaped.
- *
- * @param {string} output — raw output from `VBoxManage list vms`.
- * @returns {{name: string, uuid: string}[]} list of virtual machines.
  */
-export function parseVmList(output) {
-    const vms = [];
+export function parseVmList(output: string): Vm[] {
+    const vms: Vm[] = [];
     const re = /^"(.*)"\s+\{([0-9a-fA-F-]+)\}/gm;
     let match;
     while ((match = re.exec(output)) !== null) {
@@ -17,13 +16,8 @@ export function parseVmList(output) {
     return vms;
 }
 
-/**
- * Extracts VMState from machinereadable `VBoxManage showvminfo` output.
- *
- * @param {string} output — raw machinereadable VM info.
- * @returns {string} VM state (e.g. "running", "poweroff") or "unknown".
- */
-export function parseVmState(output) {
+/** Extracts VMState from machinereadable `VBoxManage showvminfo` output. */
+export function parseVmState(output: string): string {
     const match = output.match(/^VMState="(.+)"$/m);
     return match ? match[1] : "unknown";
 }
@@ -32,12 +26,9 @@ export function parseVmState(output) {
  * Parses key=value pairs from machinereadable VBoxManage output.
  *
  * Unwraps quoted values. Keys and values are trimmed.
- *
- * @param {string} output — raw machinereadable output.
- * @returns {Object<string, string>} map of parsed properties.
  */
-export function parseKeyValue(output) {
-    const map = {};
+export function parseKeyValue(output: string): Record<string, string> {
+    const map: Record<string, string> = {};
     const re = /^"?([^"=\n]+)"?\s*=\s*(.*)$/gm;
     let match;
     while ((match = re.exec(output)) !== null) {
@@ -54,17 +45,13 @@ export function parseKeyValue(output) {
  * Parses `VBoxManage list hdds` / `list dvds` output into medium objects.
  *
  * Blocks separated by blank lines become objects; only blocks with UUID are kept.
- *
- * @param {string} output — raw output from `VBoxManage list hdds` or `list dvds`.
- * @param {string} kind — medium kind marker: "hdd" or "dvd".
- * @returns {{kind: string, [key: string]: string}[]} list of media.
  */
-export function parseMediumList(output, kind) {
-    const items = [];
+export function parseMediumList(output: string | undefined, kind: "hdd" | "dvd"): MediumInfo[] {
+    const items: MediumInfo[] = [];
     if (!output) return items;
     const blocks = output.trim().split(/\n\s*\n/);
     for (const block of blocks) {
-        const obj = { kind };
+        const obj: MediumInfo = { kind };
         const lines = block.trim().split("\n");
         for (const line of lines) {
             const m = line.match(/^([^:]+):\s*(.*)$/);
@@ -75,14 +62,9 @@ export function parseMediumList(output, kind) {
     return items;
 }
 
-/**
- * Parses shared folders from human-readable `VBoxManage showvminfo` output.
- *
- * @param {string} humanOutput — human-readable VM info output.
- * @returns {{name: string, hostPath: string, guestPath: string, readOnly: boolean, autoMount: boolean}[]} shared folders list.
- */
-export function parseSharedFolders(humanOutput) {
-    const folders = [];
+/** Parses shared folders from human-readable `VBoxManage showvminfo` output. */
+export function parseSharedFolders(humanOutput: string): SharedFolder[] {
+    const folders: SharedFolder[] = [];
     const re = /Name:\s*'([^']+)'[,\s]+Host path:\s*'([^']+)'(?:\s*\([^)]+\))?[,\s]+(\S+)(?:[,\s]+(\S+))?/g;
     let match;
     while ((match = re.exec(humanOutput)) !== null) {
@@ -107,25 +89,24 @@ export function parseSharedFolders(humanOutput) {
  *
  * Combines machinereadable VM info with HDD/DVD lists and human-readable info
  * to produce general info, network adapters, media, USB filters and shared folders.
- *
- * @param {string} infoOutput — machinereadable `showvminfo` output.
- * @param {string} hddsOutput — output from `VBoxManage list hdds`.
- * @param {string} dvdsOutput — output from `VBoxManage list dvds`.
- * @param {string} humanInfoOutput — human-readable `showvminfo` output.
- * @returns {{general: Object, networks: Object[], media: Object[], usb: Object[], sharedFolders: Object[]}} structured VM details.
  */
-export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutput) {
+export function parseVmDetails(
+    infoOutput: string,
+    hddsOutput: string,
+    dvdsOutput: string,
+    humanInfoOutput: string,
+): VmDetails {
     const map = parseKeyValue(infoOutput);
 
-    const mediumByUuid = new Map();
-    const mediumByLocation = new Map();
+    const mediumByUuid = new Map<string, MediumInfo>();
+    const mediumByLocation = new Map<string, MediumInfo>();
     for (const m of parseMediumList(hddsOutput, "hdd")) {
-        mediumByUuid.set(m.UUID, m);
-        mediumByLocation.set(m.Location, m);
+        if (m.UUID) mediumByUuid.set(m.UUID, m);
+        if (m.Location) mediumByLocation.set(m.Location, m);
     }
     for (const m of parseMediumList(dvdsOutput, "dvd")) {
-        mediumByUuid.set(m.UUID, m);
-        mediumByLocation.set(m.Location, m);
+        if (m.UUID) mediumByUuid.set(m.UUID, m);
+        if (m.Location) mediumByLocation.set(m.Location, m);
     }
 
     const general = {
@@ -137,8 +118,8 @@ export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutp
             : (map.vrde === "off" ? "выключен" : (map.vrdeports || "—")),
     };
 
-    const networks = [];
-    const typeLabels = {
+    const networks: NetworkAdapter[] = [];
+    const typeLabels: Record<string, string> = {
         nat: "NAT",
         bridged: "bridge",
         hostonly: "host-only",
@@ -150,7 +131,7 @@ export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutp
         const nic = map[`nic${i}`];
         if (!nic || nic === "none") continue;
         const type = nic.toLowerCase();
-        const portForwarding = [];
+        const portForwarding: string[] = [];
         if (type === "nat") {
             for (const key of Object.keys(map)) {
                 const fm = key.match(/^Forwarding\((\d+)\)$/);
@@ -172,7 +153,7 @@ export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutp
         });
     }
 
-    const media = [];
+    const media: MediaItem[] = [];
     for (const key of Object.keys(map)) {
         // Skip ImageUUID entries; the matching path entry will fetch them below.
         if (key.includes("-ImageUUID-")) continue;
@@ -198,7 +179,7 @@ export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutp
         media.push({ type: typeLabel, path, size });
     }
 
-    const usb = [];
+    const usb: UsbFilter[] = [];
     for (let i = 1; map[`USBFilterActive${i}`]; i++) {
         const name = map[`USBFilterName${i}`] || "Без имени";
         const vendorId = map[`USBFilterVendorId${i}`] || "";

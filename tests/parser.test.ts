@@ -7,7 +7,7 @@ import {
     parseMediumList,
     parseSharedFolders,
     parseVmDetails,
-} from "../src/client/parser.js";
+} from "../src/client/parser.ts";
 
 describe("parseVmList", () => {
     test("returns empty array for empty output", () => {
