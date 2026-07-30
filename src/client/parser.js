@@ -174,12 +174,15 @@ export function parseVmDetails(infoOutput, hddsOutput, dvdsOutput, humanInfoOutp
 
     const media = [];
     for (const key of Object.keys(map)) {
-        const m = key.match(/^([A-Za-z][A-Za-z0-9]*)-(\d+)-(\d+)$/);
+        // Skip ImageUUID entries; the matching path entry will fetch them below.
+        if (key.includes("-ImageUUID-")) continue;
+        // Controller names from VBoxManage may contain spaces (e.g. "SATA Controller").
+        const m = key.match(/^(.+)-(\d+)-(\d+)$/);
         if (!m) continue;
-        const [, controller, port, device] = m;
+        const [, controllerName, port, device] = m;
         const path = map[key];
         if (!path || path === "none") continue;
-        const imageUuid = map[`${controller}-ImageUUID-${port}-${device}`];
+        const imageUuid = map[`${controllerName}-ImageUUID-${port}-${device}`];
         const medium = mediumByUuid.get(imageUuid) || mediumByLocation.get(path);
         let size = "—";
         let typeLabel = "HDD";

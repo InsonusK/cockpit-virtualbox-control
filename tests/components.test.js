@@ -33,6 +33,15 @@ function createAlpine() {
     };
 }
 
+function createDeferred() {
+    let resolve, reject;
+    const promise = new Promise((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
+
 /**
  * Creates a mock cockpit.spawn that records calls and returns canned responses.
  *
@@ -245,6 +254,52 @@ describe("Alpine components with mocked cockpit", () => {
             await card.runControl("pause");
 
             assert.equal(statusMessages.some((m) => m.isError && /VM is locked/.test(m.message)), true);
+        });
+
+        test("runControl disables UI and marks the command as active while in progress", async () => {
+            const deferred = createDeferred();
+            globalThis.cockpit = {
+                spawn: (args, opts) => {
+                    if (args[1] === "controlvm") return deferred.promise;
+                    return Promise.resolve('VMState="running"\n');
+                },
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            const run = card.runControl("pause");
+
+            assert.equal(card.processing, true);
+            assert.equal(card.activeCommand, "pause");
+
+            deferred.resolve();
+            await run;
+
+            assert.equal(card.processing, false);
+            assert.equal(card.activeCommand, "");
+        });
+
+        test("runStart disables UI and marks the start type as active while in progress", async () => {
+            const deferred = createDeferred();
+            globalThis.cockpit = {
+                spawn: (args, opts) => {
+                    if (args[1] === "startvm") return deferred.promise;
+                    return Promise.resolve('VMState="running"\n');
+                },
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            const run = card.runStart("headless");
+
+            assert.equal(card.processing, true);
+            assert.equal(card.activeCommand, "start:headless");
+
+            deferred.resolve();
+            await run;
+
+            assert.equal(card.processing, false);
+            assert.equal(card.activeCommand, "");
         });
 
         test("openSnapshots shows modal for the selected VM", async () => {
