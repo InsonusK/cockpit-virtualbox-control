@@ -1,14 +1,11 @@
 import {
-    vmInfo,
-    vmInfoHuman,
-    listHdds,
-    listDvds,
+    getVmState,
+    getVmDetails,
     controlVm,
     startVm,
-} from "../../client/vboxClient.ts";
-import { parseVmDetails, parseVmState } from "../../client/parser.ts";
+} from "../../client/index.ts";
 import { formatFlag, stateLabel, stateDotClass } from "../../tools/utils.ts";
-import type { Vm, VmDetails } from "../../client/types.ts";
+import type { Vm, VmDetails } from "../../client/model/index.ts";
 import type { AlpineStatic } from "../../vendor/alpine.min.js";
 
 const unknown_state = "unknown";
@@ -67,8 +64,7 @@ export function registerVmCard(Alpine: AlpineStatic): void {
         async loadState() {
             this.loadingState = true;
             try {
-                const info = await vmInfo(vm.uuid);
-                this.state = parseVmState(info);
+                this.state = await getVmState(vm.uuid);
             } catch (e: any) {
                 this.state = unknown_state;
                 console.warn("loadState failed for", vm.uuid, e.message || e);
@@ -88,20 +84,7 @@ export function registerVmCard(Alpine: AlpineStatic): void {
             this.expanded = true;
             this.loadingDetails = true;
             try {
-                const [info, hdds, dvds] = await Promise.all([
-                    vmInfo(vm.uuid),
-                    listHdds(),
-                    listDvds(),
-                ]);
-
-                let humanInfo = "";
-                try {
-                    humanInfo = await vmInfoHuman(vm.uuid);
-                } catch (e: any) {
-                    console.warn("vmInfoHuman failed for", vm.uuid, e.message || e);
-                }
-
-                this.details = parseVmDetails(info, hdds, dvds, humanInfo);
+                this.details = await getVmDetails(vm.uuid);
             } catch (e: any) {
                 app.setStatus("Ошибка: " + (e.message || e), true);
                 this.details = null;

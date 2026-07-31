@@ -1,6 +1,5 @@
-import { listVms } from "../../client/vboxClient.ts";
-import { parseVmList } from "../../client/parser.ts";
-import type { Vm } from "../../client/types.ts";
+import { listVms } from "../../client/listVms.ts";
+import type { Vm } from "../../client/model/index.ts";
 import type { AlpineStatic } from "../../vendor/alpine.min.js";
 
 export interface AppData {
@@ -30,8 +29,7 @@ export function registerApp(Alpine: AlpineStatic): void {
             this.loading = true;
             this.setStatus("Загрузка...");
             try {
-                const listOutput = await listVms();
-                this.vms = parseVmList(listOutput);
+                this.vms = await listVms();
                 this.setStatus("Обновлено: " + new Date().toLocaleTimeString());
             } catch (e: any) {
                 this.setStatus("Ошибка: " + (e.message || e), true);
