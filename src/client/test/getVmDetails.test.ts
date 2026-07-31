@@ -172,4 +172,50 @@ Encryption:     disabled
         assert.equal(details.media[0].path, "/mnt/nvme/VM/ik-microk8s-dev/ik-microk8s-dev.vdi");
         assert.equal(details.media[0].size, "76800 MBytes");
     });
+
+    test("resolves media by ImageUUID when path is a snapshot differencing image", async () => {
+        const hddUuid = "bf734afd-8fdb-4254-a48c-dec69b33457e";
+        cockpitGlobal.cockpit = {
+            spawn: createMockSpawn({
+                [`showvminfo ${UUID} --machinereadable`]: `
+name="ik-microk8s-dev"
+cpus="4"
+memory="4096"
+nic1="none"
+"SATA Controller-0-0"="/mnt/nvme/VM/ik-microk8s-dev/Snapshots/{${hddUuid}}.vdi"
+"SATA Controller-ImageUUID-0-0"="${hddUuid}"
+"SATA Controller-nonrotational-0-0"="off"
+"SATA Controller-discard-0-0"="off"
+"SATA Controller-1-0"="none"
+"IDE Controller-0-0"="emptydrive"
+"IDE Controller-IsEjected-0-0"="on"
+`,
+                "list hdds": `
+UUID:           ${hddUuid}
+Parent UUID:    base
+State:          locked write
+Type:           normal (base)
+Location:       /mnt/nvme/VM/ik-microk8s-dev/ik-microk8s-dev.vdi
+Storage format: VDI
+Capacity:       76800 MBytes
+Encryption:     disabled
+`,
+                "list dvds": "",
+                [`showvminfo ${UUID}`]: "",
+            }),
+        };
+
+        const details = await getVmDetails(UUID);
+
+        assert.equal(details.media.length, 2);
+
+        const hdd = details.media[0];
+        assert.equal(hdd.type, "HDD");
+        assert.equal(hdd.path, `/mnt/nvme/VM/ik-microk8s-dev/Snapshots/{${hddUuid}}.vdi`);
+        assert.equal(hdd.size, "76800 MBytes");
+
+        const ide = details.media[1];
+        assert.equal(ide.type, "DVD/ISO");
+        assert.equal(ide.path, "emptydrive");
+    });
 });

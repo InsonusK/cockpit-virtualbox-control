@@ -24,7 +24,15 @@ export interface VBoxMedium {
 }
 
 /** Machine-readable `VBoxManage showvminfo` output converted to a typed model. */
-export interface VBoxVmInfo {
+export interface VBoxVmInfo extends VBoxVmGeneralInfo {
+    nics: VBoxNic[];
+    storageAttachments: VBoxStorageAttachment[];
+    usbFilters: VBoxUsbFilter[];
+    sharedFolderMappings: VBoxSharedFolderMapping[];
+}
+
+/** General section of a machine-readable `VBoxManage showvminfo` output. */
+export interface VBoxVmGeneralInfo {
     name: string;
     vmState: string;
     cpus: string;
@@ -32,10 +40,6 @@ export interface VBoxVmInfo {
     ostype: string;
     vrde: string;
     vrdePorts: string;
-    nics: VBoxNic[];
-    storageAttachments: VBoxStorageAttachment[];
-    usbFilters: VBoxUsbFilter[];
-    sharedFolderMappings: VBoxSharedFolderMapping[];
 }
 
 /** Network adapter from machinereadable showvminfo. */

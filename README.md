@@ -79,11 +79,9 @@ npm test
 
 Запускает все тесты из `node --test`:
 
-- `src/client/integration/test/*.test.ts` — тесты integration-слоя, лежат рядом с тестируемыми файлами.
+- `src/client/integration/test/*.test.ts` — тесты integration-слоя, лежат рядом с тестируемыми файлами. Включают отдельные тесты для парсеров (`parseKeyValue`, `parseVmGeneralInfo`, `parseVmNics`, `parseVmStorageAttachments`, `parseVmUsbFilters`, `parseVmSharedFolderMappings`, `parseVmInfo`).
 - `src/client/test/*.test.ts` — тесты client-слоя, лежат рядом с тестируемыми файлами.
 - `tests/helpers/cockpitMock.ts` — общий мок для `cockpit.spawn()`.
-- `tests/components.test.ts` — компоненты через мок `cockpit`.
-- `tests/loadPartial.test.ts` — механизм подгрузки партиалов.
 - `tests/components.test.ts` — моки `cockpit` и минимальный стаб Alpine.js для проверки логики компонентов.
 - `tests/loadPartial.test.ts` — моки `fetch()` и `document` для механизма подгрузки партиалов.
 

@@ -70,7 +70,7 @@ export async function getVmDetails(uuid: string): Promise<VmDetails> {
             if (mediumByPath.kind === "dvd" || t === "readonly" || att.path.toLowerCase().endsWith(".iso")) {
                 typeLabel = "DVD/ISO";
             }
-        } else if (att.path.toLowerCase().endsWith(".iso")) {
+        } else if (att.path.toLowerCase().endsWith(".iso") || att.path.toLowerCase() === "emptydrive") {
             typeLabel = "DVD/ISO";
         }
         media.push({ type: typeLabel, path: att.path, size });
