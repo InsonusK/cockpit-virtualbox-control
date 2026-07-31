@@ -100,22 +100,22 @@ This matrix tracks the behavior scenarios for `src/client/*` and `src/client/int
 
 | Function | Test file |
 |----------|-----------|
-| `integration/vbox` | tests/client/integration/vbox.test.ts |
-| `integration/listVms` | tests/client/integration/listVms.test.ts |
-| `integration/listHdds` | tests/client/integration/listHdds.test.ts |
-| `integration/listDvds` | tests/client/integration/listDvds.test.ts |
-| `integration/getVmInfo` | tests/client/integration/getVmInfo.test.ts |
-| `integration/getVmInfoHuman` | tests/client/integration/getVmInfoHuman.test.ts |
-| `integration/controlVm` | tests/client/integration/controlVm.test.ts |
-| `integration/startVm` | tests/client/integration/startVm.test.ts |
-| `integration/listSnapshots` | tests/client/integration/listSnapshots.test.ts |
-| `integration/takeSnapshot` | tests/client/integration/takeSnapshot.test.ts |
-| `integration/restoreSnapshot` | tests/client/integration/restoreSnapshot.test.ts |
-| `client/listVms` | tests/client/listVms.test.ts |
-| `client/getVmState` | tests/client/getVmState.test.ts |
-| `client/getVmDetails` | tests/client/getVmDetails.test.ts |
-| `client/controlVm` | tests/client/controlVm.test.ts |
-| `client/startVm` | tests/client/startVm.test.ts |
-| `client/listSnapshots` | tests/client/listSnapshots.test.ts |
-| `client/takeSnapshot` | tests/client/takeSnapshot.test.ts |
-| `client/restoreSnapshot` | tests/client/restoreSnapshot.test.ts |
+| `integration/vbox` | src/client/integration/test/vbox.test.ts |
+| `integration/listVms` | src/client/integration/test/listVms.test.ts |
+| `integration/listHdds` | src/client/integration/test/listHdds.test.ts |
+| `integration/listDvds` | src/client/integration/test/listDvds.test.ts |
+| `integration/getVmInfo` | src/client/integration/test/getVmInfo.test.ts |
+| `integration/getVmInfoHuman` | src/client/integration/test/getVmInfoHuman.test.ts |
+| `integration/controlVm` | src/client/integration/test/controlVm.test.ts |
+| `integration/startVm` | src/client/integration/test/startVm.test.ts |
+| `integration/listSnapshots` | src/client/integration/test/listSnapshots.test.ts |
+| `integration/takeSnapshot` | src/client/integration/test/takeSnapshot.test.ts |
+| `integration/restoreSnapshot` | src/client/integration/test/restoreSnapshot.test.ts |
+| `client/listVms` | src/client/test/listVms.test.ts |
+| `client/getVmState` | src/client/test/getVmState.test.ts |
+| `client/getVmDetails` | src/client/test/getVmDetails.test.ts |
+| `client/controlVm` | src/client/test/controlVm.test.ts |
+| `client/startVm` | src/client/test/startVm.test.ts |
+| `client/listSnapshots` | src/client/test/listSnapshots.test.ts |
+| `client/takeSnapshot` | src/client/test/takeSnapshot.test.ts |
+| `client/restoreSnapshot` | src/client/test/restoreSnapshot.test.ts |

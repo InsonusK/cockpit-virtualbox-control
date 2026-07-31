@@ -1,7 +1,7 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { listDvds } from "../../../src/client/integration/listDvds.ts";
-import { createMockSpawn, cockpitGlobal } from "../../helpers/cockpitMock.ts";
+import { listDvds } from "../listDvds.ts";
+import { createMockSpawn, cockpitGlobal } from "../../../../tests/helpers/cockpitMock.ts";
 
 describe("integration/listDvds", () => {
     afterEach(() => {

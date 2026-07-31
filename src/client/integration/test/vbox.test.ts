@@ -1,7 +1,7 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { vbox } from "../../../src/client/integration/vbox.ts";
-import { createMockSpawn, cockpitGlobal } from "../../helpers/cockpitMock.ts";
+import { vbox } from "../vbox.ts";
+import { createMockSpawn, cockpitGlobal } from "../../../../tests/helpers/cockpitMock.ts";
 
 describe("integration/vbox", () => {
     afterEach(() => {

@@ -1,7 +1,7 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { listVms } from "../../../src/client/integration/listVms.ts";
-import { createMockSpawn, cockpitGlobal } from "../../helpers/cockpitMock.ts";
+import { listVms } from "../listVms.ts";
+import { createMockSpawn, cockpitGlobal } from "../../../../tests/helpers/cockpitMock.ts";
 
 const UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 

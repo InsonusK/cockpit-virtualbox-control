@@ -1,7 +1,7 @@
 import { test, describe, beforeEach, afterEach } from "node:test";
 import assert from "node:assert/strict";
-import { listHdds } from "../../../src/client/integration/listHdds.ts";
-import { createMockSpawn, cockpitGlobal } from "../../helpers/cockpitMock.ts";
+import { listHdds } from "../listHdds.ts";
+import { createMockSpawn, cockpitGlobal } from "../../../../tests/helpers/cockpitMock.ts";
 
 describe("integration/listHdds", () => {
     afterEach(() => {

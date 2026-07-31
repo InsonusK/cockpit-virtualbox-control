@@ -8,5 +8,12 @@ const dist = path.join(root, "dist");
 
 cpSync(src, dist, {
     recursive: true,
-    filter: (source) => !source.endsWith(".ts"),
+    filter: (source) => {
+        if (source.endsWith(".ts")) return false;
+        const relative = path.relative(src, source);
+        if (relative === "") return true;
+        const parts = relative.split(path.sep);
+        if (parts.includes("test")) return false;
+        return true;
+    },
 });

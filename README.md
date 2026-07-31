@@ -77,27 +77,13 @@ node --test
 npm test
 ```
 
-Запускает все тесты из директории `tests/`:
+Запускает все тесты из `node --test`:
 
-- `tests/client/integration/listVms.test.ts` — парсинг вывода `VBoxManage list vms` в модели VirtualBox.
-- `tests/client/integration/listHdds.test.ts` — парсинг вывода `VBoxManage list hdds`.
-- `tests/client/integration/listDvds.test.ts` — парсинг вывода `VBoxManage list dvds`.
-- `tests/client/integration/getVmInfo.test.ts` — парсинг `VBoxManage showvminfo --machinereadable` в `VBoxVmInfo`.
-- `tests/client/integration/getVmInfoHuman.test.ts` — парсинг shared folders из человекочитаемого `showvminfo`.
-- `tests/client/integration/controlVm.test.ts` — валидация и вызов `controlvm`.
-- `tests/client/integration/startVm.test.ts` — валидация и вызов `startvm`.
-- `tests/client/integration/listSnapshots.test.ts` — парсинг `VBoxManage snapshot list` и обработка отсутствия снапшотов.
-- `tests/client/integration/takeSnapshot.test.ts` — валидация и вызов `snapshot take`.
-- `tests/client/integration/restoreSnapshot.test.ts` — валидация и вызов `snapshot restore`.
-- `tests/client/integration/vbox.test.ts` — мокирование базового `vbox()` и проверка опций `cockpit.spawn()`.
-- `tests/client/listVms.test.ts` — маппинг VM-модели VirtualBox в модель приложения.
-- `tests/client/getVmState.test.ts` — маппинг состояния VM в строку приложения.
-- `tests/client/getVmDetails.test.ts` — маппинг деталей VM в `VmDetails`.
-- `tests/client/controlVm.test.ts` — маппинг результата `controlvm`.
-- `tests/client/startVm.test.ts` — маппинг результата `startvm`.
-- `tests/client/listSnapshots.test.ts` — маппинг списка снапшотов в имена.
-- `tests/client/takeSnapshot.test.ts` — маппинг результата `snapshot take`.
-- `tests/client/restoreSnapshot.test.ts` — маппинг результата `snapshot restore`.
+- `src/client/integration/test/*.test.ts` — тесты integration-слоя, лежат рядом с тестируемыми файлами.
+- `src/client/test/*.test.ts` — тесты client-слоя, лежат рядом с тестируемыми файлами.
+- `tests/helpers/cockpitMock.ts` — общий мок для `cockpit.spawn()`.
+- `tests/components.test.ts` — компоненты через мок `cockpit`.
+- `tests/loadPartial.test.ts` — механизм подгрузки партиалов.
 - `tests/components.test.ts` — моки `cockpit` и минимальный стаб Alpine.js для проверки логики компонентов.
 - `tests/loadPartial.test.ts` — моки `fetch()` и `document` для механизма подгрузки партиалов.
 
