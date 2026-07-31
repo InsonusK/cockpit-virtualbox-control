@@ -1,5 +1,5 @@
-import { listSnapshots, takeSnapshot, restoreSnapshot } from "../../client/vboxClient.ts";
-import type { Vm } from "../../client/types.ts";
+import { listSnapshots, takeSnapshot, restoreSnapshot } from "../../client/index.ts";
+import type { Vm } from "../../client/model/index.ts";
 import type { AlpineStatic } from "../../vendor/alpine.min.js";
 
 type StatusCallback = (message: string, isError?: boolean) => void;
@@ -13,7 +13,6 @@ export interface SnapshotModalStore {
     onStatus: StatusCallback | null;
     title: string;
 
-    parseSnapshotList(output: string): string[];
     setStatus(message: string, isError?: boolean): void;
     show(vm: Vm, statusCallback: StatusCallback): void;
     close(): void;
@@ -32,17 +31,6 @@ export function registerSnapshotModal(Alpine: AlpineStatic): void {
         loading: false,
         onStatus: null,
         title: "Снапшоты",
-
-        /** Extracts snapshot names from machinereadable `VBoxManage snapshot list` output. */
-        parseSnapshotList(output: string) {
-            const names: string[] = [];
-            const re = /^SnapshotName(-\d+)?="(.*)"$/gm;
-            let match;
-            while ((match = re.exec(output)) !== null) {
-                names.push(match[2]);
-            }
-            return names;
-        },
 
         /** Reports a status message back to the parent app if a callback is set. */
         setStatus(message: string, isError = false) {
@@ -76,8 +64,7 @@ export function registerSnapshotModal(Alpine: AlpineStatic): void {
             this.loading = true;
             this.snapshots = [];
             try {
-                const output = await listSnapshots(this.vm.uuid);
-                this.snapshots = this.parseSnapshotList(output);
+                this.snapshots = await listSnapshots(this.vm.uuid);
             } catch (e: any) {
                 this.snapshots = [];
                 this.setStatus("Ошибка загрузки снапшотов: " + ((e && e.message) || e || "неизвестная ошибка"), true);

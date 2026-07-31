@@ -324,12 +324,6 @@ describe("Alpine components with mocked cockpit", () => {
     });
 
     describe("snapshotModal", () => {
-        test("parseSnapshotList extracts snapshot names", () => {
-            const modal = alpine.getStore("snapshotModal");
-            const output = 'SnapshotName="base"\nSnapshotName-1="after-update"\nSnapshotName-2="checkpoint"\n';
-            assert.deepEqual(modal.parseSnapshotList(output), ["base", "after-update", "checkpoint"]);
-        });
-
         test("show loads snapshots and resets name", async () => {
             cockpitGlobal.cockpit = {
                 spawn: createMockSpawn({

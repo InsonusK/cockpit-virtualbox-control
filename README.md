@@ -79,11 +79,27 @@ npm test
 
 Запускает все тесты из директории `tests/`:
 
-- `parser.test.ts` — unit-тесты чистых функций парсинга.
-- `mediumParser.test.ts` — unit-тесты парсера на реальных выводах VBoxManage (Capacity/Encryption, контроллеры с пробелами в имени).
-- `vboxClient.test.ts` — мокирование `cockpit.spawn()`, проверка аргументов и валидации.
-- `components.test.ts` — моки `cockpit` и минимальный стаб Alpine.js для проверки логики компонентов.
-- `loadPartial.test.ts` — моки `fetch()` и `document` для механизма подгрузки партиалов.
+- `tests/client/integration/listVms.test.ts` — парсинг вывода `VBoxManage list vms` в модели VirtualBox.
+- `tests/client/integration/listHdds.test.ts` — парсинг вывода `VBoxManage list hdds`.
+- `tests/client/integration/listDvds.test.ts` — парсинг вывода `VBoxManage list dvds`.
+- `tests/client/integration/getVmInfo.test.ts` — парсинг `VBoxManage showvminfo --machinereadable` в `VBoxVmInfo`.
+- `tests/client/integration/getVmInfoHuman.test.ts` — парсинг shared folders из человекочитаемого `showvminfo`.
+- `tests/client/integration/controlVm.test.ts` — валидация и вызов `controlvm`.
+- `tests/client/integration/startVm.test.ts` — валидация и вызов `startvm`.
+- `tests/client/integration/listSnapshots.test.ts` — парсинг `VBoxManage snapshot list` и обработка отсутствия снапшотов.
+- `tests/client/integration/takeSnapshot.test.ts` — валидация и вызов `snapshot take`.
+- `tests/client/integration/restoreSnapshot.test.ts` — валидация и вызов `snapshot restore`.
+- `tests/client/integration/vbox.test.ts` — мокирование базового `vbox()` и проверка опций `cockpit.spawn()`.
+- `tests/client/listVms.test.ts` — маппинг VM-модели VirtualBox в модель приложения.
+- `tests/client/getVmState.test.ts` — маппинг состояния VM в строку приложения.
+- `tests/client/getVmDetails.test.ts` — маппинг деталей VM в `VmDetails`.
+- `tests/client/controlVm.test.ts` — маппинг результата `controlvm`.
+- `tests/client/startVm.test.ts` — маппинг результата `startvm`.
+- `tests/client/listSnapshots.test.ts` — маппинг списка снапшотов в имена.
+- `tests/client/takeSnapshot.test.ts` — маппинг результата `snapshot take`.
+- `tests/client/restoreSnapshot.test.ts` — маппинг результата `snapshot restore`.
+- `tests/components.test.ts` — моки `cockpit` и минимальный стаб Alpine.js для проверки логики компонентов.
+- `tests/loadPartial.test.ts` — моки `fetch()` и `document` для механизма подгрузки партиалов.
 
 В Node.js 24 с багом [nodejs/node#64555](https://github.com/nodejs/node/issues/64555) явный аргумент директории (`node --test tests/`) может падать с `MODULE_NOT_FOUND`. Без аргументов `node --test` корректно обнаруживает директорию `tests/` и запускает все тесты.
 
@@ -91,9 +107,10 @@ npm test
 
 ## Архитектура
 
-- `src/client/parser.ts` — чистые функции парсинга вывода `VBoxManage`.
-- `src/client/vboxClient.ts` — обёртки над `cockpit.spawn()`. Все вызовы идут с массивами аргументов, без конкатенации shell-строк. Покрыт мок-тестами через подмену глобального `cockpit`.
-- `src/components/**/*.ts` — Alpine-компоненты (`Alpine.data` / `Alpine.store`), без HTML-строк внутри TS. Логика компонентов покрыта мок-тестами без реального DOM и браузера.
+- `src/client/integration/` — слой интеграции с VirtualBox. Каждый файл содержит ровно один публичный метод, который вызывает `VBoxManage` и превращает строковый ответ в типизированную модель VirtualBox (`VBoxVm`, `VBoxVmInfo`, `VBoxMedium`, ...). Внутри метода два блока: вызов `VBoxManage` и маппинг строки ответа в объект. Если API изменится или появится другой виртуализатор (VMware, libvirt), достаточно переписать или расширить этот слой.
+- `src/client/model/` — модели данных, удобные приложению (`Vm`, `VmDetails`, `NetworkAdapter`, `MediaItem`, `UsbFilter`, `SharedFolder`).
+- `src/client/*.ts` — слой клиента. Каждый файл содержит один публичный метод, удобный приложению. Метод вызывает один или несколько методов из `src/client/integration/` и преобразует их ответ в модели приложения. Компоненты не думают о формате VirtualBox — они получают уже готовые модели.
+- `src/components/**/*.ts` — Alpine-компоненты (`Alpine.data` / `Alpine.store`), без HTML-строк внутри TS. Используют только методы и модели из `src/client/`. Логика компонентов покрыта мок-тестами без реального DOM и браузера.
 - `src/partials/*.html` — HTML-шаблоны компонентов. Вложенные шаблоны (карточка и детали VM) подключаются через `<x-include src="...">` и разрешаются `loadPartial` до старта Alpine. Механизм `loadPartial` покрыт мок-тестами через подмену `fetch` и `document`.
 - `src/app.ts` — оркестратор: регистрирует компоненты, загружает партиалы, запускает Alpine.
 
