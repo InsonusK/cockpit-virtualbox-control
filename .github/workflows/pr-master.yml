@@ -8,7 +8,7 @@ on:
     branches: [master]
 
 jobs:
-  changes:
+  code-changes:
     runs-on: ubuntu-latest
     outputs:
       src: ${{ steps.filter.outputs.src }}
@@ -23,11 +23,25 @@ jobs:
             src:
               - 'src/**'
               - 'tests/**'
+              
+  workflow-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
               - '.github/workflows/pr-master.yml'
 
   run-tests:
-    needs: changes
-    if: needs.changes.outputs.src == 'true'
+    needs: [code-changes, workflow-changes] 
+    if: needs.code-changes.outputs.src == 'true' || needs.workflow-changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -49,8 +63,8 @@ jobs:
 
 
   version-check:
-    needs: changes
-    if: needs.changes.outputs.src == 'true'
+    needs: code-changes
+    if: needs.code-changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
