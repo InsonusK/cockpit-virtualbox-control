@@ -16,28 +16,28 @@
             </template>
         </span>
     </div>
-    <div class="vm-actions">
+<div class="vm-actions">
         <template x-if="isRunning()">
             <span>
-                <button class="btn btn-small" @click.stop="runControl('pause')">Пауза</button>
-                <button class="btn btn-small" @click.stop="runControl('savestate')">Сохранить состояние</button>
-                <button class="btn btn-small" @click.stop="runControl('acpipowerbutton')">ACPI выключение</button>
-                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'pause'}" @click.stop="runControl('pause')">Пауза</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'savestate'}" @click.stop="runControl('savestate')">Сохранить состояние</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'acpipowerbutton'}" @click.stop="runControl('acpipowerbutton')">ACPI выключение</button>
+                <button class="btn btn-small btn-danger" :disabled="processing" :class="{'btn-active': activeCommand === 'poweroff'}" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="isPaused()">
             <span>
-                <button class="btn btn-small" @click.stop="runControl('resume')">Продолжить</button>
-                <button class="btn btn-small btn-danger" @click.stop="runControl('poweroff')">Force off</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'resume'}" @click.stop="runControl('resume')">Продолжить</button>
+                <button class="btn btn-small btn-danger" :disabled="processing" :class="{'btn-active': activeCommand === 'poweroff'}" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="isOff()">
             <span>
-                <button class="btn btn-small" @click.stop="runStart('headless')">Запустить (headless)</button>
-                <button class="btn btn-small" @click.stop="runStart('gui')">Запустить (GUI)</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'start:headless'}" @click.stop="runStart('headless')">Запустить (headless)</button>
+                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'start:gui'}" @click.stop="runStart('gui')">Запустить (GUI)</button>
             </span>
         </template>
-        <button class="btn btn-small btn-secondary" @click.stop="openSnapshots()">Снапшоты</button>
+        <button class="btn btn-small btn-secondary" :disabled="processing" @click.stop="openSnapshots()">Снапшоты</button>
     </div>
 </div>
 <div class="vm-details" x-show="expanded" x-cloak>

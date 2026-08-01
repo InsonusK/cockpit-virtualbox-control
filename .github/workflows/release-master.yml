@@ -1,0 +1,52 @@
+name: Publish release build
+
+# Fires once, right after a release PR into `master` is merged. Builds the
+# TypeScript source and publishes dist/ as a GitHub Release asset — nothing
+# is committed back to master, so no branch-protection bypass is needed.
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-publish:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Read manifest version
+        id: version
+        run: echo "value=$(jq -r '.version' src/manifest.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Build
+        run: npm run build
+
+      - name: Package dist
+        run: tar czf dist.tar.gz -C dist .
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          tag="v${VERSION}"
+          gh release create "$tag" dist.tar.gz \
+            --title "v${VERSION}: ${{ github.event.pull_request.title }}" \
+            --notes "Собрано из PR #${{ github.event.pull_request.number }}." \
+            --target master

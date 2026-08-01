@@ -1,0 +1,13 @@
+{
+    "type": "module",
+    "private": true,
+    "devDependencies": {
+        "typescript": "^7.0",
+        "@types/node": "^22"
+    },
+    "scripts": {
+        "build": "rm -rf dist && tsc && node scripts/copy-static.js",
+        "typecheck": "tsc --noEmit",
+        "test": "node --test"
+    }
+}

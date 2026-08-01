@@ -1,0 +1,18 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ES2022",
+        "moduleResolution": "Bundler",
+        "lib": ["ES2022", "DOM"],
+        "strict": true,
+        "outDir": "dist",
+        "rootDir": "src",
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true,
+        "resolveJsonModule": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": ["src/**/*.ts"],
+    "exclude": ["src/**/test/**", "src/**/*.test.ts"]
+}
