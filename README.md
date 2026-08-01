@@ -45,7 +45,7 @@ repo-root/
 └── Virtualbox_plugin_alpine_migration_spec.md
 ```
 
-`dist/` — результат `npm run build`, в репозитории не хранится (см. `.gitignore`). Ветка `master` содержит только его: именно из неё Cockpit устанавливает плагин, и именно туда автоматически публикуется скомпилированный JS после мержа релизного PR (см. `.github/workflows/release-master.yml`) — руками эту ветку не редактируют.
+`dist/` — результат `npm run build`, в репозитории не хранится (см. `.gitignore`) и в git ни в одну ветку не попадает. После мержа релизного PR в `master` workflow `.github/workflows/release-master.yml` собирает `dist/` и публикует его как asset GitHub Release (см. раздел "Релиз" ниже) — именно оттуда сборку забирает ansible при разворачивании Cockpit-плагина на сервере.
 
 ## Технологии
 
@@ -64,6 +64,10 @@ ln -s "$(pwd)/dist" ~/.local/share/cockpit/virtualbox
 ```
 
 Cockpit не умеет исполнять `.ts` — правите файлы в `src/`, `tsc --watch` пересобирает их в `dist/`, обновляете страницу в браузере (`Ctrl+Shift+R`). Разовая сборка: `npm run build`.
+
+## Использование
+
+Как плагин работает для конечного пользователя в браузере, какие в нём есть функции (управление питанием ВМ, снапшоты) и какую информацию он показывает по каждой машине — см. [docs/usage.md](docs/usage.md).
 
 ## Про `cockpit.js`
 
@@ -108,12 +112,16 @@ npm test
 4. `partials/app.html` использует `<x-include src="partials/vm-card.html">` внутри `x-for`; карточка, в свою очередь, включает `partials/vm-details.html` для раскрываемой панели деталей.
 5. Таким образом к моменту старта Alpine в DOM уже находится полная разметка, и ручной вызов `Alpine.initTree()` не требуется.
 
-## Релиз в `master`
+## Релиз
 
-`master` — защищённая ветка, принимает изменения только через PR, и содержит исключительно скомпилированный JS + статику (тот же плоский набор файлов, что Cockpit ожидает в `~/.local/share/cockpit/virtualbox`). TypeScript-исходники в `master` не попадают.
+`master` — защищённая ветка с обычными TypeScript-исходниками (та же раскладка, что и в `develop`), принимает изменения только через PR. Никаких исключений в правиле защиты не нужно: workflow ничего не коммитит обратно в ветку, поэтому bypass-актор и отдельный PAT не требуются — хватает штатного `GITHUB_TOKEN`.
 
-После мержа релизного PR в `master` workflow `.github/workflows/release-master.yml` собирает `npm run build` и коммитит содержимое `dist/` поверх дерева ветки от имени бота — обычным пушем (без `--force`), используя PAT, добавленный в список исключений (bypass) для правила "только через PR". Это разовая ручная настройка репозитория, которую нужно сделать через GitHub UI:
+После мержа релизного PR в `master` workflow `.github/workflows/release-master.yml`:
 
-1. Завести бота/сервисный аккаунт или fine-grained PAT с правом `contents: write` на этот репозиторий.
-2. Добавить этого актора в bypass-список правила защиты ветки `master` (Settings → Rules → Rulesets, либо classic branch protection → "Allow specified actors to bypass required pull requests") — только он сможет пушить в обход PR, для людей ограничение остаётся.
-3. Сохранить PAT как секрет репозитория (например `RELEASE_BOT_TOKEN`) — workflow ожидает его под этим именем.
+1. собирает `npm run build`;
+2. упаковывает `dist/` в `dist.tar.gz`;
+3. публикует его как asset GitHub Release с тегом `release-<номер PR>`.
+
+Скомпилированный JS в git не попадает вообще — ни в `master`, ни куда-либо ещё.
+
+Деплой на сервер с Cockpit делает ansible: скачивает `dist.tar.gz` с нужного GitHub Release этого репозитория и распаковывает в `~/.local/share/cockpit/virtualbox`. Node.js/npm на целевых хостах не нужен — единственная сборка происходит в CI.
