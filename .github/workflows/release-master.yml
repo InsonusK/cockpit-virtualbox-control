@@ -29,6 +29,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Read manifest version
+        id: version
+        run: echo "value=$(jq -r '.version' src/manifest.json)" >> "$GITHUB_OUTPUT"
+
       - name: Build
         run: npm run build
 
@@ -38,10 +42,11 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.value }}
         run: |
           set -euo pipefail
-          tag="release-${{ github.event.pull_request.number }}"
+          tag="v${VERSION}"
           gh release create "$tag" dist.tar.gz \
-            --title "Release #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}" \
+            --title "v${VERSION}: ${{ github.event.pull_request.title }}" \
             --notes "Собрано из PR #${{ github.event.pull_request.number }}." \
             --target master

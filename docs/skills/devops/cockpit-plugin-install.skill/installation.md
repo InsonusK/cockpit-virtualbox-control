@@ -13,7 +13,7 @@ Obtain a `dist/` build before deploying it anywhere — pick one of the two ways
   gh release list --repo InsonusK/cockpit-virtualbox-control
   gh release download <tag> --repo InsonusK/cockpit-virtualbox-control --pattern 'dist.tar.gz'
   ```
-  Every merged release PR into `master` publishes a `dist.tar.gz` asset automatically, tagged `release-<PR number>`.
+  Every merged release PR into `master` publishes a `dist.tar.gz` asset automatically, tagged `v<version>` (the version from `src/manifest.json` at merge time).
 
 ## SHOULD
 - Verify the build before deploying it — `index.html` and `manifest.json` must be present, and no `.ts` file must be present:
