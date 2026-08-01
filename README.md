@@ -122,7 +122,7 @@ npm test
 
 1. собирает `npm run build`;
 2. упаковывает `dist/` в `dist.tar.gz`;
-3. публикует его как asset GitHub Release с тегом `v<версия из src/manifest.json>`.
+3. публикует его как asset GitHub Release с тегом `v<версия из src/manifest.json>`, автоматически сгенерированными release notes (список смёрженных PR со времени прошлого релиза, `--generate-notes`) вдобавок к заголовку с номером PR.
 
 Скомпилированный JS в git не попадает вообще — ни в `master`, ни куда-либо ещё.
 

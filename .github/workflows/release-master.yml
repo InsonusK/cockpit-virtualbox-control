@@ -49,4 +49,5 @@ jobs:
           gh release create "$tag" dist.tar.gz \
             --title "v${VERSION}: ${{ github.event.pull_request.title }}" \
             --notes "Собрано из PR #${{ github.event.pull_request.number }}." \
+            --generate-notes \
             --target master
