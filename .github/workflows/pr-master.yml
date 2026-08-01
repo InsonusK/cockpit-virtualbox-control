@@ -82,7 +82,7 @@ jobs:
         run: node scripts/check-version-bump.js ${{ github.event.pull_request.base.sha }}
 
   test-summary:
-    name: test summary
+    name: test-summary
     needs: [run-tests, version-check]
     if: always()
     runs-on: ubuntu-latest
