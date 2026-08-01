@@ -3,6 +3,7 @@ name: Publish release build
 # Fires once, right after a release PR into `master` is merged. Builds the
 # TypeScript source and publishes dist/ as a GitHub Release asset — nothing
 # is committed back to master, so no branch-protection bypass is needed.
+# Skipped entirely if the merged PR didn't touch src/ or tests/ (e.g. docs-only PRs).
 on:
   pull_request:
     types: [closed]
@@ -10,10 +11,26 @@ on:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
-  build-and-publish:
+  changes:
     if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'tests/**'
+
+  build-and-publish:
+    needs: changes
+    if: github.event.pull_request.merged == true && needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout master

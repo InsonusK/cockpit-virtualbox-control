@@ -1,13 +1,33 @@
 name: PR checks
 
 # Gate for PRs targeting `master`: tests must pass, and src/manifest.json's
-# version must be bumped above the version already on master.
+# version must be bumped above the version already on master. Both checks
+# only run when src/ or tests/ actually changed.
 on:
   pull_request:
     branches: [master]
 
 jobs:
-  test:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            src:
+              - 'src/**'
+              - 'tests/**'
+              - '.github/workflows/pr-master.yml'
+
+  run-tests:
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -27,7 +47,10 @@ jobs:
       - name: Test
         run: npm test
 
+
   version-check:
+    needs: changes
+    if: needs.changes.outputs.src == 'true'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -43,3 +66,21 @@ jobs:
 
       - name: Check manifest version was bumped
         run: node scripts/check-version-bump.js ${{ github.event.pull_request.base.sha }}
+
+  test-summary:
+    name: test summary
+    needs: [run-tests, version-check]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.run-tests.result }}" = "failure" ]; then
+            echo "Tests failed"
+            exit 1
+          fi
+          if [ "${{ needs.version-check.result }}" = "failure" ]; then
+            echo "Version check failed"
+            exit 1
+          fi
+          echo "Tests passed or skipped"
