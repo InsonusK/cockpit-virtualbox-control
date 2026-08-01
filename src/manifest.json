@@ -1,11 +1,11 @@
 {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "requires": {
         "cockpit": "150"
     },
     "tools": {
         "index": {
-            "label": "VirtualBox (dev)",
+            "label": "VirtualBox",
             "path": "index.html"
         }
     }

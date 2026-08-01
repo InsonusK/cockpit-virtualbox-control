@@ -56,6 +56,9 @@ jobs:
       - name: Package dist
         run: tar czf dist.tar.gz -C dist .
 
+      - name: Checksum
+        run: sha256sum dist.tar.gz > dist.tar.gz.sha256
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -63,7 +66,7 @@ jobs:
         run: |
           set -euo pipefail
           tag="v${VERSION}"
-          gh release create "$tag" dist.tar.gz \
+          gh release create "$tag" dist.tar.gz dist.tar.gz.sha256 \
             --title "v${VERSION}: ${{ github.event.pull_request.title }}" \
             --notes "Собрано из PR #${{ github.event.pull_request.number }}." \
             --generate-notes \
