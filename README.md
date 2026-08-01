@@ -116,13 +116,13 @@ npm test
 
 `master` — защищённая ветка с обычными TypeScript-исходниками (та же раскладка, что и в `develop`), принимает изменения только через PR. Никаких исключений в правиле защиты не нужно: workflow ничего не коммитит обратно в ветку, поэтому bypass-актор и отдельный PAT не требуются — хватает штатного `GITHUB_TOKEN`.
 
-Каждый PR в `master` проверяется workflow `.github/workflows/pr-master.yml`: прогоняются типы (`npm run typecheck`) и тесты (`npm test`), а также проверяется, что `version` в `src/manifest.json` (формат `X.Y.Z`) увеличен относительно версии в `master` — без этого PR замёржить нельзя.
+Каждый PR в `master` проверяется workflow `.github/workflows/pr-master.yml`. Проверки (типы, тесты, версия) запускаются только если PR меняет что-то в `src/` или `tests/`; если изменений там нет, обе джобы пропускаются. Когда изменения есть: прогоняются типы (`npm run typecheck`) и тесты (`npm test`), а также проверяется, что `version` в `src/manifest.json` (формат `X.Y.Z`) увеличен относительно версии в `master` — без этого PR замёржить нельзя.
 
-После мержа релизного PR в `master` workflow `.github/workflows/release-master.yml`:
+После мержа PR в `master` workflow `.github/workflows/release-master.yml` запускается, только если PR менял что-то в `src/` или `tests/` (иначе, например для чисто документационного PR, релиз не создаётся). Если изменения были, он:
 
 1. собирает `npm run build`;
 2. упаковывает `dist/` в `dist.tar.gz`;
-3. публикует его как asset GitHub Release с тегом `v<версия из src/manifest.json>`.
+3. публикует его как asset GitHub Release с тегом `v<версия из src/manifest.json>`, автоматически сгенерированными release notes (список смёрженных PR со времени прошлого релиза, `--generate-notes`) вдобавок к заголовку с номером PR.
 
 Скомпилированный JS в git не попадает вообще — ни в `master`, ни куда-либо ещё.
 
