@@ -12,6 +12,8 @@ const unknown_state = "unknown";
 
 interface AppHandle {
     setStatus(message: string, isError?: boolean): void;
+    registerCard(uuid: string, card: { refresh(): Promise<void> }): void;
+    unregisterCard(uuid: string): void;
 }
 
 export interface VmCardData {
@@ -30,8 +32,11 @@ export interface VmCardData {
     stateDotClass: typeof stateDotClass;
 
     init(): Promise<void>;
+    destroy(): void;
     loadState(): Promise<void>;
+    loadDetails(): Promise<void>;
     toggleDetails(): Promise<void>;
+    refresh(): Promise<void>;
     runControl(command: string): Promise<void>;
     runStart(type: string): Promise<void>;
     openSnapshots(): void;
@@ -57,7 +62,13 @@ export function registerVmCard(Alpine: AlpineStatic): void {
 
         /** Fetches and parses the VM state when the card is initialized. */
         async init() {
+            app.registerCard(vm.uuid, this);
             await this.loadState();
+        },
+
+        /** Unregisters the card from the app when its element is removed. */
+        destroy() {
+            app.unregisterCard(vm.uuid);
         },
 
         /** Fetches and parses the VM state. */
@@ -73,6 +84,19 @@ export function registerVmCard(Alpine: AlpineStatic): void {
             }
         },
 
+        /** Fetches and parses the VM details. */
+        async loadDetails() {
+            this.loadingDetails = true;
+            try {
+                this.details = await getVmDetails(vm.uuid);
+            } catch (e: any) {
+                app.setStatus("Ошибка: " + (e.message || e), true);
+                this.details = null;
+            } finally {
+                this.loadingDetails = false;
+            }
+        },
+
         /** Toggles the expanded details panel and loads VM details on first open. */
         async toggleDetails() {
             if (this.expanded) {
@@ -82,14 +106,14 @@ export function registerVmCard(Alpine: AlpineStatic): void {
             }
 
             this.expanded = true;
-            this.loadingDetails = true;
-            try {
-                this.details = await getVmDetails(vm.uuid);
-            } catch (e: any) {
-                app.setStatus("Ошибка: " + (e.message || e), true);
-                this.details = null;
-            } finally {
-                this.loadingDetails = false;
+            await this.loadDetails();
+        },
+
+        /** Refreshes the VM state, and the details too if the panel is expanded. */
+        async refresh() {
+            await this.loadState();
+            if (this.expanded) {
+                await this.loadDetails();
             }
         },
 
