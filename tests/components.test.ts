@@ -74,11 +74,18 @@ describe("Alpine components with mocked cockpit", () => {
         statusMessages = [];
         app = {
             vms: [],
+            cards: {} as Record<string, any>,
             async loadVms() {
                 this.vms.push({ name: "refreshed" });
             },
             setStatus(message: string, isError = false) {
                 statusMessages.push({ message, isError });
+            },
+            registerCard(uuid: string, card: any) {
+                this.cards[uuid] = card;
+            },
+            unregisterCard(uuid: string) {
+                delete this.cards[uuid];
             },
         };
     });
