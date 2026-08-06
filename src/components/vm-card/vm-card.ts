@@ -3,6 +3,7 @@ import {
     getVmDetails,
     controlVm,
     startVm,
+    restartVrde,
 } from "../../client/index.ts";
 import { formatFlag, stateLabel, stateDotClass } from "../../tools/utils.ts";
 import type { Vm, VmDetails } from "../../client/model/index.ts";
@@ -26,6 +27,7 @@ export interface VmCardData {
     loadingState: boolean;
     processing: boolean;
     activeCommand: string;
+    dropdownOpen: boolean;
 
     formatFlag: typeof formatFlag;
     stateLabel: typeof stateLabel;
@@ -39,6 +41,9 @@ export interface VmCardData {
     refresh(): Promise<void>;
     runControl(command: string): Promise<void>;
     runStart(type: string): Promise<void>;
+    runVrdeRestart(): Promise<void>;
+    toggleDropdown(): void;
+    closeDropdown(): void;
     openSnapshots(): void;
     isRunning(): boolean;
     isPaused(): boolean;
@@ -57,6 +62,7 @@ export function registerVmCard(Alpine: AlpineStatic): void {
         loadingState: false,
         processing: false,
         activeCommand: "",
+        dropdownOpen: false,
 
         formatFlag,
 
@@ -159,8 +165,41 @@ export function registerVmCard(Alpine: AlpineStatic): void {
                 });
         },
 
+        /** Turns the VM's VRDE server off then on again, and refreshes state. */
+        runVrdeRestart() {
+            this.processing = true;
+            this.activeCommand = "vrde-restart";
+            this.dropdownOpen = false;
+            app.setStatus(`Выполняется: перезагрузка VRDE...`);
+            return restartVrde(this.vm.uuid)
+                .then(() => {
+                    app.setStatus(`Готово: ${this.vm.name}`);
+                })
+                .catch((e: any) => {
+                    app.setStatus("Ошибка: " + (e.message || e), true);
+                })
+                .finally(() => {
+                    this.processing = false;
+                    this.activeCommand = "";
+                    // Return the promise so runVrdeRestart's caller can wait for the
+                    // state refresh to finish, even though loadState yields no value.
+                    return this.loadState();
+                });
+        },
+
+        /** Toggles the "more actions" dropdown. */
+        toggleDropdown() {
+            this.dropdownOpen = !this.dropdownOpen;
+        },
+
+        /** Closes the "more actions" dropdown. */
+        closeDropdown() {
+            this.dropdownOpen = false;
+        },
+
         /** Opens the snapshot modal for the selected VM. */
         openSnapshots() {
+            this.dropdownOpen = false;
             Alpine.store("snapshotModal").show(this.vm, app.setStatus.bind(app));
         },
 

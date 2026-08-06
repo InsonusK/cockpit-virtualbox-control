@@ -328,6 +328,90 @@ describe("Alpine components with mocked cockpit", () => {
             await new Promise((r) => setTimeout(r, 0)); // let refresh() finish
             assert.deepEqual(modal.snapshots, ["base", "after-update"]);
         });
+
+        test("openSnapshots closes the dropdown", async () => {
+            cockpitGlobal.cockpit = { spawn: createMockSpawn({}) };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            card.dropdownOpen = true;
+            card.openSnapshots(vm);
+
+            assert.equal(card.dropdownOpen, false);
+        });
+
+        test("toggleDropdown flips dropdownOpen", () => {
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+
+            card.toggleDropdown();
+            assert.equal(card.dropdownOpen, true);
+            card.toggleDropdown();
+            assert.equal(card.dropdownOpen, false);
+        });
+
+        test("closeDropdown sets dropdownOpen to false", () => {
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            card.dropdownOpen = true;
+
+            card.closeDropdown();
+            assert.equal(card.dropdownOpen, false);
+        });
+
+        test("runVrdeRestart toggles VRDE off then on and refreshes state", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'VMState="running"\n',
+                }),
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            card.dropdownOpen = true;
+            await card.runVrdeRestart();
+
+            const controlCalls = cockpitGlobal.cockpit.spawn.calls.filter((c: any) => c.args[1] === "controlvm");
+            assert.deepEqual(controlCalls[0].args, ["VBoxManage", "controlvm", UUID, "vrde", "off"]);
+            assert.deepEqual(controlCalls[1].args, ["VBoxManage", "controlvm", UUID, "vrde", "on"]);
+            assert.equal(card.dropdownOpen, false);
+            assert.equal(statusMessages[statusMessages.length - 1].message, "Готово: Test VM");
+        });
+
+        test("runVrdeRestart reports errors via app.setStatus", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: () => Promise.reject(new Error("VM is locked")),
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            await card.runVrdeRestart();
+
+            assert.equal(statusMessages.some((m) => m.isError && /VM is locked/.test(m.message)), true);
+        });
+
+        test("runVrdeRestart disables UI and marks the command as active while in progress", async () => {
+            const deferred = createDeferred();
+            cockpitGlobal.cockpit = {
+                spawn: (args: string[]) => {
+                    if (args[1] === "controlvm") return deferred.promise;
+                    return Promise.resolve('VMState="running"\n');
+                },
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            const run = card.runVrdeRestart();
+
+            assert.equal(card.processing, true);
+            assert.equal(card.activeCommand, "vrde-restart");
+
+            deferred.resolve();
+            await run;
+
+            assert.equal(card.processing, false);
+            assert.equal(card.activeCommand, "");
+        });
     });
 
     describe("snapshotModal", () => {
