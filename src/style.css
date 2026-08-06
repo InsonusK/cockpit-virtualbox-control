@@ -99,6 +99,26 @@ h1 { font-size: 20px; font-weight: 600; margin: 0; }
 
 .vm-actions { display: flex; gap: 8px; flex-wrap: wrap; flex-shrink: 0; }
 
+.dropdown { position: relative; }
+
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 180px;
+    z-index: 10;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item { width: 100%; text-align: left; }
+
 .vm-details {
     display: block;
     margin-top: 14px;

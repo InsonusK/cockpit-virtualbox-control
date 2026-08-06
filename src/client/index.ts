@@ -3,6 +3,7 @@ export { getVmState } from "./getVmState.ts";
 export { getVmDetails } from "./getVmDetails.ts";
 export { controlVm } from "./controlVm.ts";
 export { startVm } from "./startVm.ts";
+export { restartVrde } from "./restartVrde.ts";
 export { listSnapshots } from "./listSnapshots.ts";
 export { takeSnapshot } from "./takeSnapshot.ts";
 export { restoreSnapshot } from "./restoreSnapshot.ts";

@@ -19,16 +19,13 @@
 <div class="vm-actions">
         <template x-if="isRunning()">
             <span>
-                <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'pause'}" @click.stop="runControl('pause')">Пауза</button>
                 <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'savestate'}" @click.stop="runControl('savestate')">Сохранить состояние</button>
                 <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'acpipowerbutton'}" @click.stop="runControl('acpipowerbutton')">ACPI выключение</button>
-                <button class="btn btn-small btn-danger" :disabled="processing" :class="{'btn-active': activeCommand === 'poweroff'}" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="isPaused()">
             <span>
                 <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'resume'}" @click.stop="runControl('resume')">Продолжить</button>
-                <button class="btn btn-small btn-danger" :disabled="processing" :class="{'btn-active': activeCommand === 'poweroff'}" @click.stop="runControl('poweroff')">Force off</button>
             </span>
         </template>
         <template x-if="isOff()">
@@ -37,7 +34,21 @@
                 <button class="btn btn-small" :disabled="processing" :class="{'btn-active': activeCommand === 'start:gui'}" @click.stop="runStart('gui')">Запустить (GUI)</button>
             </span>
         </template>
-        <button class="btn btn-small btn-secondary" :disabled="processing" @click.stop="openSnapshots()">Снапшоты</button>
+        <div class="dropdown" @click.outside="closeDropdown()">
+            <button class="btn btn-small btn-secondary" :disabled="processing" @click.stop="toggleDropdown()">Ещё &#9662;</button>
+            <div class="dropdown-menu" x-show="dropdownOpen" x-cloak>
+                <template x-if="isRunning()">
+                    <button class="btn btn-small dropdown-item" :disabled="processing" :class="{'btn-active': activeCommand === 'pause'}" @click.stop="runControl('pause')">Пауза</button>
+                </template>
+                <template x-if="isRunning() || isPaused()">
+                    <button class="btn btn-small btn-danger dropdown-item" :disabled="processing" :class="{'btn-active': activeCommand === 'poweroff'}" @click.stop="runControl('poweroff')">Force off</button>
+                </template>
+                <template x-if="isRunning()">
+                    <button class="btn btn-small dropdown-item" :disabled="processing" :class="{'btn-active': activeCommand === 'vrde-restart'}" @click.stop="runVrdeRestart()">Перезагрузка VRDE</button>
+                </template>
+                <button class="btn btn-small btn-secondary dropdown-item" :disabled="processing" @click.stop="openSnapshots()">Снапшоты</button>
+            </div>
+        </div>
     </div>
 </div>
 <div class="vm-details" x-show="expanded" x-cloak>
