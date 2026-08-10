@@ -1,0 +1,121 @@
+<div class="modal" x-data="{}" x-show="$store.createVmModal.isOpen" x-cloak>
+    <div class="modal-box modal-wide" @click.outside="$store.createVmModal.close()">
+        <h2>Создание виртуальной машины</h2>
+
+        <form class="create-vm-form" @submit.prevent="$store.createVmModal.submit()">
+            <div class="form-row">
+                <label for="create-vm-name">Имя VM</label>
+                <input id="create-vm-name" type="text" x-model="$store.createVmModal.name" placeholder="my_new_vm" :disabled="$store.createVmModal.loading">
+            </div>
+
+            <div class="form-row">
+                <label for="create-vm-folder">Папка для VM</label>
+                <input id="create-vm-folder" type="text" x-model="$store.createVmModal.folder" placeholder="/path/to/disk" :disabled="$store.createVmModal.loading">
+            </div>
+
+            <div class="form-row">
+                <label for="create-vm-iso">Путь к ISO</label>
+                <input id="create-vm-iso" type="text" x-model="$store.createVmModal.isoPath" placeholder="/path/to/iso/install.iso" :disabled="$store.createVmModal.loading">
+            </div>
+
+            <div class="form-row">
+                <label for="create-vm-ostype">Тип ОС</label>
+                <select id="create-vm-ostype" x-model="$store.createVmModal.ostype" :disabled="$store.createVmModal.loading">
+                    <template x-for="os in $store.createVmModal.osTypes" :key="os">
+                        <option :value="os" x-text="os"></option>
+                    </template>
+                </select>
+            </div>
+
+            <div class="form-row form-row-half">
+                <div class="form-col">
+                    <label for="create-vm-memory">Память (МБ)</label>
+                    <input id="create-vm-memory" type="number" min="1" x-model.number="$store.createVmModal.memory" :disabled="$store.createVmModal.loading">
+                </div>
+                <div class="form-col">
+                    <label for="create-vm-cpus">CPU</label>
+                    <input id="create-vm-cpus" type="number" min="1" x-model.number="$store.createVmModal.cpus" :disabled="$store.createVmModal.loading">
+                </div>
+            </div>
+
+            <div class="form-row form-row-half">
+                <div class="form-col">
+                    <label for="create-vm-disksize">Размер диска (ГБ)</label>
+                    <input id="create-vm-disksize" type="number" min="1" x-model.number="$store.createVmModal.diskSizeGb" :disabled="$store.createVmModal.loading">
+                </div>
+                <div class="form-col">
+                    <label for="create-vm-cpucap">CPU execution cap (%)</label>
+                    <input id="create-vm-cpucap" type="number" min="1" max="100" x-model.number="$store.createVmModal.cpuExecutionCap" :disabled="$store.createVmModal.loading">
+                </div>
+            </div>
+
+            <div class="form-row form-row-half">
+                <div class="form-col">
+                    <label for="create-vm-vrdeport">Порт VRDE</label>
+                    <input id="create-vm-vrdeport" type="text" x-model="$store.createVmModal.vrdePort" placeholder="3390" :disabled="$store.createVmModal.loading">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label>Тип сети</label>
+                <div class="radio-group">
+                    <label class="radio-label">
+                        <input type="radio" value="bridged" x-model="$store.createVmModal.networkType" :disabled="$store.createVmModal.loading">
+                        <span>Bridge</span>
+                    </label>
+                    <label class="radio-label">
+                        <input type="radio" value="nat" x-model="$store.createVmModal.networkType" :disabled="$store.createVmModal.loading">
+                        <span>NAT</span>
+                    </label>
+                </div>
+            </div>
+
+            <template x-if="$store.createVmModal.networkType === 'bridged'">
+                <div class="form-row form-row-half">
+                    <div class="form-col">
+                        <label for="create-vm-mac">MAC-адрес</label>
+                        <input id="create-vm-mac" type="text" x-model="$store.createVmModal.macAddress" placeholder="0800275C4F1A" :disabled="$store.createVmModal.loading">
+                    </div>
+                    <div class="form-col">
+                        <label for="create-vm-bridge">Bridge-адаптер</label>
+                        <input id="create-vm-bridge" type="text" x-model="$store.createVmModal.bridgeAdapter" placeholder="eno1" :disabled="$store.createVmModal.loading">
+                    </div>
+                </div>
+            </template>
+
+            <template x-if="$store.createVmModal.networkType === 'nat'">
+                <div class="form-row">
+                    <div class="port-forward-header">
+                        <label>Проброс портов</label>
+                        <button type="button" class="btn btn-small btn-secondary" @click="$store.createVmModal.addPortForwarding()" :disabled="$store.createVmModal.loading">+</button>
+                    </div>
+                    <div class="port-forward-list">
+                        <template x-for="(rule, index) in $store.createVmModal.portForwardings" :key="index">
+                            <div class="port-forward-rule">
+                                <input type="text" x-model="rule.name" placeholder="имя" :disabled="$store.createVmModal.loading">
+                                <select x-model="rule.protocol" :disabled="$store.createVmModal.loading">
+                                    <option value="tcp">tcp</option>
+                                    <option value="udp">udp</option>
+                                </select>
+                                <input type="text" x-model="rule.hostIp" placeholder="host ip" :disabled="$store.createVmModal.loading">
+                                <input type="text" x-model="rule.hostPort" placeholder="host port" :disabled="$store.createVmModal.loading">
+                                <input type="text" x-model="rule.guestIp" placeholder="guest ip" :disabled="$store.createVmModal.loading">
+                                <input type="text" x-model="rule.guestPort" placeholder="guest port" :disabled="$store.createVmModal.loading">
+                                <button type="button" class="btn btn-small btn-danger" @click="$store.createVmModal.removePortForwarding(index)" :disabled="$store.createVmModal.loading">−</button>
+                            </div>
+                        </template>
+                        <p class="empty-msg" x-show="$store.createVmModal.portForwardings.length === 0">Правила проброса портов не добавлены.</p>
+                    </div>
+                </div>
+            </template>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" @click="$store.createVmModal.close()" :disabled="$store.createVmModal.loading">Отмена</button>
+                <button type="submit" class="btn" :disabled="$store.createVmModal.loading">
+                    <span x-show="!$store.createVmModal.loading">Создать</span>
+                    <span x-show="$store.createVmModal.loading">Создание...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

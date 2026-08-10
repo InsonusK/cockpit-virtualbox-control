@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { registerApp } from "../src/components/app/app.ts";
 import { registerVmCard } from "../src/components/vm-card/vm-card.ts";
 import { registerSnapshotModal } from "../src/components/snapshot-modal/snapshot-modal.ts";
+import { registerCreateVmModal } from "../src/components/create-vm/create-vm.ts";
 
 const UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
@@ -70,6 +71,7 @@ describe("Alpine components with mocked cockpit", () => {
         registerApp(alpine);
         registerVmCard(alpine);
         registerSnapshotModal(alpine);
+        registerCreateVmModal(alpine);
 
         statusMessages = [];
         app = {
@@ -522,6 +524,119 @@ describe("Alpine components with mocked cockpit", () => {
             assert.equal(modal.vm, null);
             assert.deepEqual(modal.snapshots, []);
             assert.equal(modal.newName, "");
+            assert.equal(modal.onStatus, null);
+        });
+    });
+
+    describe("createVmModal", () => {
+        test("show opens the modal with default fields", () => {
+            const modal = alpine.getStore("createVmModal");
+            modal.show(app.setStatus.bind(app), app.loadVms.bind(app));
+
+            assert.equal(modal.isOpen, true);
+            assert.equal(modal.name, "");
+            assert.equal(modal.memory, 4096);
+            assert.equal(modal.cpus, 4);
+            assert.equal(modal.diskSizeGb, 75);
+            assert.equal(modal.macAddress, "0800275C4F1A");
+            assert.equal(modal.vrdePort, "3390");
+            assert.equal(modal.networkType, "bridged");
+        });
+
+        test("submit runs the createVm sequence and refreshes the list", async () => {
+            cockpitGlobal.cockpit = { spawn: createMockSpawn({}) };
+            let refreshed = false;
+            const modal = alpine.getStore("createVmModal");
+
+            modal.show(
+                app.setStatus.bind(app),
+                async () => { refreshed = true; }
+            );
+            modal.name = "my_new_vm";
+            modal.folder = "/path/to/disk";
+            modal.isoPath = "/path/to/iso/install.iso";
+            modal.diskSizeGb = 75;
+
+            await modal.submit();
+
+            const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args.slice(1).join(" "));
+            assert.equal(calls[0], "createvm --name my_new_vm --ostype Ubuntu_64 --basefolder /path/to/disk --register");
+            assert.equal(calls[1], "modifyvm my_new_vm --memory 4096 --cpus 4 --ioapic on --cpuexecutioncap 100");
+            assert.equal(calls[2], "createmedium disk --filename /path/to/disk/my_new_vm/my_new_vm.vdi --size 76800 --format VDI");
+            assert.equal(calls[7], "modifyvm my_new_vm --nic1 bridged --bridgeadapter1 eno1 --macaddress1 0800275C4F1A");
+            assert.equal(modal.isOpen, false);
+            assert.equal(refreshed, true);
+            assert.equal(statusMessages.some((m) => /Виртуальная машина my_new_vm создана/.test(m.message)), true);
+        });
+
+        test("submit uses NAT with port forwarding rules", async () => {
+            cockpitGlobal.cockpit = { spawn: createMockSpawn({}) };
+            const modal = alpine.getStore("createVmModal");
+
+            modal.show(app.setStatus.bind(app), app.loadVms.bind(app));
+            modal.name = "my_new_vm";
+            modal.folder = "/path/to/disk";
+            modal.isoPath = "/path/to/iso/install.iso";
+            modal.networkType = "nat";
+            modal.portForwardings = [
+                { name: "ssh", protocol: "tcp", hostIp: "", hostPort: "2222", guestIp: "", guestPort: "22" },
+            ];
+
+            await modal.submit();
+
+            const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args.slice(1).join(" "));
+            assert.equal(calls[7], "modifyvm my_new_vm --nic1 nat");
+            assert.equal(calls[8], "modifyvm my_new_vm --natpf1 ssh,tcp,,2222,,22");
+        });
+
+        test("submit ignores empty name", async () => {
+            let called = false;
+            cockpitGlobal.cockpit = {
+                spawn: () => {
+                    called = true;
+                    return Promise.resolve("");
+                },
+            };
+
+            const modal = alpine.getStore("createVmModal");
+            modal.show(app.setStatus.bind(app), app.loadVms.bind(app));
+            modal.name = "   ";
+            await modal.submit();
+
+            assert.equal(called, false);
+            assert.equal(statusMessages.some((m) => /имя виртуальной машины/.test(m.message)), true);
+        });
+
+        test("submit validates MAC address format", async () => {
+            let called = false;
+            cockpitGlobal.cockpit = {
+                spawn: () => {
+                    called = true;
+                    return Promise.resolve("");
+                },
+            };
+
+            const modal = alpine.getStore("createVmModal");
+            modal.show(app.setStatus.bind(app), app.loadVms.bind(app));
+            modal.name = "vm";
+            modal.folder = "/path";
+            modal.isoPath = "/iso";
+            modal.macAddress = "bad";
+            await modal.submit();
+
+            assert.equal(called, false);
+            assert.equal(statusMessages.some((m) => /MAC-адрес/.test(m.message)), true);
+        });
+
+        test("close resets modal state", () => {
+            const modal = alpine.getStore("createVmModal");
+            modal.show(app.setStatus.bind(app), app.loadVms.bind(app));
+            modal.name = "old";
+
+            modal.close();
+
+            assert.equal(modal.isOpen, false);
+            assert.equal(modal.name, "");
             assert.equal(modal.onStatus, null);
         });
     });

@@ -15,6 +15,7 @@ export interface AppData {
     registerCard(uuid: string, card: VmCardHandle): void;
     unregisterCard(uuid: string): void;
     loadVms(): Promise<void>;
+    openCreateVmModal(): void;
     init(): void;
 }
 
@@ -61,6 +62,14 @@ export function registerApp(Alpine: AlpineStatic): void {
             } finally {
                 this.loading = false;
             }
+        },
+
+        /** Opens the create VM modal, passing status and refresh callbacks. */
+        openCreateVmModal() {
+            Alpine.store("createVmModal").show(
+                this.setStatus.bind(this),
+                this.loadVms.bind(this),
+            );
         },
 
         /** Called by Alpine when the component is initialized. */
