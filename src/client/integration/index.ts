@@ -8,5 +8,7 @@ export { startVm } from "./startVm.ts";
 export { listSnapshots } from "./listSnapshots.ts";
 export { takeSnapshot } from "./takeSnapshot.ts";
 export { restoreSnapshot } from "./restoreSnapshot.ts";
+export { createVm } from "./createVm.ts";
+export type { CreateVmOptions } from "./createVm.ts";
 export type * from "./model.ts";
 export { vbox, assertUuid } from "./vbox.ts";
