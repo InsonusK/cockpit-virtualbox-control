@@ -16,7 +16,7 @@ export interface AppData {
     registerCard(uuid: string, card: VmCardHandle): void;
     unregisterCard(uuid: string): void;
     loadVms(): Promise<void>;
-    loadVersion(): Promise<void>;
+    readVersion(): void;
     openCreateVmModal(): void;
     init(): void;
 }
@@ -67,16 +67,16 @@ export function registerApp(Alpine: AlpineStatic): void {
             }
         },
 
-        /** Loads the plugin version from manifest.json for display in the header. */
-        async loadVersion() {
-            try {
-                const response = await fetch("manifest.json");
-                if (!response.ok) return;
-                const manifest = await response.json();
-                this.version = manifest.version || "";
-            } catch {
-                this.version = "";
-            }
+        /**
+         * Reads the plugin version for display in the header.
+         *
+         * Read from a `<meta>` tag injected into index.html at build time (see
+         * scripts/copy-static.js) rather than fetched at runtime: Cockpit's resource
+         * server does not reliably expose a package's manifest.json for direct fetch.
+         */
+        readVersion() {
+            const meta = document.querySelector('meta[name="app-version"]');
+            this.version = meta?.getAttribute("content") || "";
         },
 
         /** Opens the create VM modal, passing status and refresh callbacks. */
@@ -89,7 +89,7 @@ export function registerApp(Alpine: AlpineStatic): void {
 
         /** Called by Alpine when the component is initialized. */
         init() {
-            this.loadVersion();
+            this.readVersion();
             this.loadVms();
         },
     }));
