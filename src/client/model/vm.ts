@@ -15,6 +15,7 @@ export interface VmGeneralInfo {
     memory: string;
     os: string;
     vrdePort: string;
+    autostart: boolean;
 }
 
 /** Full VM details assembled for the application. */

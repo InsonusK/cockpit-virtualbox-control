@@ -40,6 +40,7 @@ export interface VBoxVmGeneralInfo {
     ostype: string;
     vrde: string;
     vrdePorts: string;
+    autostart: string;
 }
 
 /** Network adapter from machinereadable showvminfo. */

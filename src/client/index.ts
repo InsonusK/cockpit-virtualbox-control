@@ -9,4 +9,8 @@ export { takeSnapshot } from "./takeSnapshot.ts";
 export { restoreSnapshot } from "./restoreSnapshot.ts";
 export { createVm } from "./createVm.ts";
 export type { CreateVmOptions } from "./createVm.ts";
+export { modifyVm } from "./modifyVm.ts";
+export type { ModifyVmOptions, UsbFilterInput, SharedFolderInput } from "./modifyVm.ts";
+export { getVmEditableInfo } from "./getVmEditableInfo.ts";
+export type { VmEditableInfo, EditableUsbFilter, EditableSharedFolder } from "./getVmEditableInfo.ts";
 export type * from "./model/index.ts";

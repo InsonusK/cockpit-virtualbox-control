@@ -12,6 +12,7 @@ describe("integration/parseVmGeneralInfo", () => {
             ostype: "Ubuntu_64",
             vrde: "on",
             vrdeports: "3389",
+            autostart_enabled: "on",
         });
 
         assert.equal(info.name, "Test VM");
@@ -21,6 +22,12 @@ describe("integration/parseVmGeneralInfo", () => {
         assert.equal(info.ostype, "Ubuntu_64");
         assert.equal(info.vrde, "on");
         assert.equal(info.vrdePorts, "3389");
+        assert.equal(info.autostart, "on");
+    });
+
+    test("falls back to the autostart key when autostart_enabled is absent", () => {
+        const info = parseVmGeneralInfo({ autostart: "off" });
+        assert.equal(info.autostart, "off");
     });
 
     test("returns empty strings and unknown for missing fields", () => {
@@ -32,5 +39,6 @@ describe("integration/parseVmGeneralInfo", () => {
         assert.equal(info.ostype, "");
         assert.equal(info.vrde, "");
         assert.equal(info.vrdePorts, "");
+        assert.equal(info.autostart, "");
     });
 });

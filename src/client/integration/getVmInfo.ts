@@ -40,6 +40,7 @@ export function parseVmGeneralInfo(map: Record<string, string>): VBoxVmGeneralIn
         ostype: map.ostype || "",
         vrde: map.vrde || "",
         vrdePorts: map.vrdeports || "",
+        autostart: map.autostart_enabled || map.autostart || "",
     };
 }
 

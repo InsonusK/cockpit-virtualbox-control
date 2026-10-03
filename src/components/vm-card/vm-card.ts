@@ -45,6 +45,7 @@ export interface VmCardData {
     toggleDropdown(): void;
     closeDropdown(): void;
     openSnapshots(): void;
+    openEditVm(): void;
     isRunning(): boolean;
     isPaused(): boolean;
     isOff(): boolean;
@@ -201,6 +202,12 @@ export function registerVmCard(Alpine: AlpineStatic): void {
         openSnapshots() {
             this.dropdownOpen = false;
             Alpine.store("snapshotModal").show(this.vm, app.setStatus.bind(app));
+        },
+
+        /** Opens the edit VM modal for the selected VM. */
+        openEditVm() {
+            this.dropdownOpen = false;
+            Alpine.store("editVmModal").show(this.vm, app.setStatus.bind(app), this.refresh.bind(this));
         },
 
         stateLabel,
