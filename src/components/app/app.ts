@@ -10,11 +10,13 @@ export interface AppData {
     vms: Vm[];
     status: { message: string; isError: boolean };
     loading: boolean;
+    version: string;
     cards: Record<string, VmCardHandle>;
     setStatus(message: string, isError?: boolean): void;
     registerCard(uuid: string, card: VmCardHandle): void;
     unregisterCard(uuid: string): void;
     loadVms(): Promise<void>;
+    loadVersion(): Promise<void>;
     openCreateVmModal(): void;
     init(): void;
 }
@@ -25,6 +27,7 @@ export function registerApp(Alpine: AlpineStatic): void {
         vms: [],
         status: { message: "Загрузка...", isError: false },
         loading: false,
+        version: "",
         cards: {},
 
         /** Updates the current status message shown in the UI. */
@@ -64,6 +67,18 @@ export function registerApp(Alpine: AlpineStatic): void {
             }
         },
 
+        /** Loads the plugin version from manifest.json for display in the header. */
+        async loadVersion() {
+            try {
+                const response = await fetch("manifest.json");
+                if (!response.ok) return;
+                const manifest = await response.json();
+                this.version = manifest.version || "";
+            } catch {
+                this.version = "";
+            }
+        },
+
         /** Opens the create VM modal, passing status and refresh callbacks. */
         openCreateVmModal() {
             Alpine.store("createVmModal").show(
@@ -74,6 +89,7 @@ export function registerApp(Alpine: AlpineStatic): void {
 
         /** Called by Alpine when the component is initialized. */
         init() {
+            this.loadVersion();
             this.loadVms();
         },
     }));

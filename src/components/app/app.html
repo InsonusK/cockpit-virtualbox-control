@@ -1,5 +1,5 @@
 <header>
-    <h1>VirtualBox</h1>
+    <h1>VirtualBox <span class="app-version" x-show="version" x-text="'v' + version"></span></h1>
     <div class="header-actions">
         <span id="status-msg" :class="{ 'status-error': status.isError }" x-text="status.message"></span>
         <button id="create-vm-btn" class="btn" @click="openCreateVmModal" :disabled="loading">Создать VM</button>
