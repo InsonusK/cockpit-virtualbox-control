@@ -1,6 +1,5 @@
 import {
-    getVmState,
-    getVmAutostart,
+    getVmStatus,
     getVmDetails,
     controlVm,
     startVm,
@@ -81,16 +80,13 @@ export function registerVmCard(Alpine: AlpineStatic): void {
             app.unregisterCard(vm.uuid);
         },
 
-        /** Fetches and parses the VM state and autostart flag. */
+        /** Fetches and parses the VM state and autostart flag from a single call. */
         async loadState() {
             this.loadingState = true;
             try {
-                const [state, autostart] = await Promise.all([
-                    getVmState(vm.uuid),
-                    getVmAutostart(vm.uuid),
-                ]);
-                this.state = state;
-                this.autostart = autostart;
+                const status = await getVmStatus(vm.uuid);
+                this.state = status.state;
+                this.autostart = status.autostart;
             } catch (e: any) {
                 this.state = unknown_state;
                 this.autostart = false;
