@@ -4,6 +4,7 @@ import { registerApp } from "../src/components/app/app.ts";
 import { registerVmCard } from "../src/components/vm-card/vm-card.ts";
 import { registerSnapshotModal } from "../src/components/snapshot-modal/snapshot-modal.ts";
 import { registerCreateVmModal } from "../src/components/create-vm/create-vm.ts";
+import { registerEditVmModal } from "../src/components/edit-vm/edit-vm.ts";
 
 const UUID = "a1b2c3d4-e5f6-7890-abcd-ef1234567890";
 
@@ -72,6 +73,7 @@ describe("Alpine components with mocked cockpit", () => {
         registerVmCard(alpine);
         registerSnapshotModal(alpine);
         registerCreateVmModal(alpine);
+        registerEditVmModal(alpine);
 
         statusMessages = [];
         app = {
@@ -340,6 +342,30 @@ describe("Alpine components with mocked cockpit", () => {
             card.openSnapshots(vm);
 
             assert.equal(card.dropdownOpen, false);
+        });
+
+        test("openEditVm shows modal for the selected VM and closes the dropdown", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'cpus="2"\nmemory="4096"\nvrde="on"\nvrdeports="3390"\n',
+                    [`showvminfo ${UUID}`]: "",
+                }),
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            card.dropdownOpen = true;
+            card.openEditVm();
+
+            assert.equal(card.dropdownOpen, false);
+            const modal = alpine.getStore("editVmModal");
+            assert.equal(modal.isOpen, true);
+            assert.equal(modal.vm.name, "Test VM");
+            await new Promise((r) => setTimeout(r, 0)); // let load() finish
+            assert.equal(modal.memory, 4096);
+            assert.equal(modal.cpus, 2);
+            assert.equal(modal.vrdeEnabled, true);
+            assert.equal(modal.vrdePort, "3390");
         });
 
         test("toggleDropdown flips dropdownOpen", () => {
@@ -637,6 +663,100 @@ describe("Alpine components with mocked cockpit", () => {
 
             assert.equal(modal.isOpen, false);
             assert.equal(modal.name, "");
+            assert.equal(modal.onStatus, null);
+        });
+    });
+
+    describe("editVmModal", () => {
+        const vm = { name: "Test VM", uuid: UUID };
+
+        test("show loads current settings and pre-fills the form", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]:
+                        'cpus="4"\nmemory="2048"\nvrde="on"\nvrdeports="3391"\nautostart_enabled="on"\n' +
+                        'USBFilterName1="My drive"\nUSBFilterActive1="on"\nUSBFilterVendorId1="0781"\nUSBFilterProductId1="5567"\n' +
+                        'SharedFolderNameMachineMapping1="work"\nSharedFolderPathMachineMapping1="/home/user/work"\n',
+                    [`showvminfo ${UUID}`]: "Name: 'work', Host path: '/home/user/work' (machine Mapping), readonly, autostart\n",
+                }),
+            };
+
+            const modal = alpine.getStore("editVmModal");
+            modal.show(vm, app.setStatus.bind(app), app.loadVms.bind(app));
+            await new Promise((r) => setTimeout(r, 0));
+
+            assert.equal(modal.isOpen, true);
+            assert.equal(modal.loadingData, false);
+            assert.equal(modal.memory, 2048);
+            assert.equal(modal.cpus, 4);
+            assert.equal(modal.vrdeEnabled, true);
+            assert.equal(modal.vrdePort, "3391");
+            assert.equal(modal.autostart, true);
+            assert.equal(modal.usbFilters.length, 1);
+            assert.equal(modal.usbFilters[0].name, "My drive");
+            assert.equal(modal.existingUsbFilterCount, 1);
+            assert.equal(modal.sharedFolders.length, 1);
+            assert.equal(modal.sharedFolders[0].name, "work");
+            assert.deepEqual(modal.existingSharedFolderNames, ["work"]);
+        });
+
+        test("submit applies changes and refreshes", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'cpus="2"\nmemory="2048"\nvrde="off"\n',
+                    [`showvminfo ${UUID}`]: "",
+                }),
+            };
+            let refreshed = false;
+            const modal = alpine.getStore("editVmModal");
+            modal.show(vm, app.setStatus.bind(app), async () => { refreshed = true; });
+            await new Promise((r) => setTimeout(r, 0));
+
+            modal.memory = 4096;
+            modal.cpus = 4;
+            modal.autostart = true;
+            await modal.submit();
+
+            const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args.slice(1).join(" "));
+            assert.equal(calls.some((c: string) => c === `modifyvm ${UUID} --memory 4096 --cpus 4 --autostart-enabled on`), true);
+            assert.equal(modal.isOpen, false);
+            assert.equal(refreshed, true);
+            assert.equal(statusMessages.some((m) => /обновлены/.test(m.message)), true);
+        });
+
+        test("submit rejects non-positive memory or cpus", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'cpus="2"\nmemory="2048"\nvrde="off"\n',
+                    [`showvminfo ${UUID}`]: "",
+                }),
+            };
+            const modal = alpine.getStore("editVmModal");
+            modal.show(vm, app.setStatus.bind(app), app.loadVms.bind(app));
+            await new Promise((r) => setTimeout(r, 0));
+
+            modal.memory = 0;
+            await modal.submit();
+
+            assert.equal(modal.isOpen, true);
+            assert.equal(statusMessages.some((m) => m.isError && /больше 0/.test(m.message)), true);
+        });
+
+        test("close resets modal state", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'cpus="2"\nmemory="2048"\nvrde="off"\n',
+                    [`showvminfo ${UUID}`]: "",
+                }),
+            };
+            const modal = alpine.getStore("editVmModal");
+            modal.show(vm, app.setStatus.bind(app), app.loadVms.bind(app));
+            await new Promise((r) => setTimeout(r, 0));
+
+            modal.close();
+
+            assert.equal(modal.isOpen, false);
+            assert.equal(modal.vm, null);
             assert.equal(modal.onStatus, null);
         });
     });

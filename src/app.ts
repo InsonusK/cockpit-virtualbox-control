@@ -4,11 +4,13 @@ import { registerApp } from "./components/app/app.ts";
 import { registerVmCard } from "./components/vm-card/vm-card.ts";
 import { registerSnapshotModal } from "./components/snapshot-modal/snapshot-modal.ts";
 import { registerCreateVmModal } from "./components/create-vm/create-vm.ts";
+import { registerEditVmModal } from "./components/edit-vm/edit-vm.ts";
 
 registerApp(Alpine);
 registerVmCard(Alpine);
 registerSnapshotModal(Alpine);
 registerCreateVmModal(Alpine);
+registerEditVmModal(Alpine);
 
 /** Loads partial templates into the DOM and starts Alpine.js. */
 async function init(): Promise<void> {
@@ -16,6 +18,7 @@ async function init(): Promise<void> {
         loadPartial("components/app/app.html", "#app"),
         loadPartial("components/snapshot-modal/snapshot-modal.html", "#modal-container"),
         loadPartial("components/create-vm/create-vm.html", "#modal-container"),
+        loadPartial("components/edit-vm/edit-vm.html", "#modal-container"),
     ]);
     Alpine.start();
 }

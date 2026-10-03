@@ -1,0 +1,96 @@
+<div class="modal" x-data="{}" x-show="$store.editVmModal.isOpen" x-cloak>
+    <div class="modal-box modal-wide" @click.outside="$store.editVmModal.close()">
+        <h2>Параметры VM<span x-show="$store.editVmModal.vm"> — <span x-text="$store.editVmModal.vm?.name"></span></span></h2>
+
+        <p class="empty-msg" x-show="$store.editVmModal.loadingData">Загрузка параметров...</p>
+
+        <form class="create-vm-form" x-show="!$store.editVmModal.loadingData" @submit.prevent="$store.editVmModal.submit()">
+            <div class="form-row form-row-half">
+                <div class="form-col">
+                    <label for="edit-vm-memory">Память (МБ)</label>
+                    <input id="edit-vm-memory" type="number" min="1" x-model.number="$store.editVmModal.memory" :disabled="$store.editVmModal.loading">
+                </div>
+                <div class="form-col">
+                    <label for="edit-vm-cpus">CPU</label>
+                    <input id="edit-vm-cpus" type="number" min="1" x-model.number="$store.editVmModal.cpus" :disabled="$store.editVmModal.loading">
+                </div>
+            </div>
+
+            <div class="form-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" x-model="$store.editVmModal.vrdeEnabled" :disabled="$store.editVmModal.loading">
+                    <span>VRDE включён</span>
+                </label>
+            </div>
+
+            <template x-if="$store.editVmModal.vrdeEnabled">
+                <div class="form-row">
+                    <label for="edit-vm-vrdeport">Порт VRDE</label>
+                    <input id="edit-vm-vrdeport" type="text" x-model="$store.editVmModal.vrdePort" placeholder="3390" :disabled="$store.editVmModal.loading">
+                </div>
+            </template>
+
+            <div class="form-row">
+                <label class="checkbox-label">
+                    <input type="checkbox" x-model="$store.editVmModal.autostart" :disabled="$store.editVmModal.loading">
+                    <span>Автозапуск при старте хоста</span>
+                </label>
+            </div>
+
+            <div class="form-row">
+                <div class="port-forward-header">
+                    <label>USB устройства</label>
+                    <button type="button" class="btn btn-small btn-secondary" @click="$store.editVmModal.addUsbFilter()" :disabled="$store.editVmModal.loading">+</button>
+                </div>
+                <div class="port-forward-list">
+                    <template x-for="(filter, index) in $store.editVmModal.usbFilters" :key="index">
+                        <div class="usb-filter-row">
+                            <input type="text" x-model="filter.name" placeholder="имя фильтра" :disabled="$store.editVmModal.loading">
+                            <input type="text" x-model="filter.vendorId" placeholder="vendor id" :disabled="$store.editVmModal.loading">
+                            <input type="text" x-model="filter.productId" placeholder="product id" :disabled="$store.editVmModal.loading">
+                            <label class="checkbox-label">
+                                <input type="checkbox" x-model="filter.active" :disabled="$store.editVmModal.loading">
+                                <span>активен</span>
+                            </label>
+                            <button type="button" class="btn btn-small btn-danger" @click="$store.editVmModal.removeUsbFilter(index)" :disabled="$store.editVmModal.loading">−</button>
+                        </div>
+                    </template>
+                    <p class="empty-msg" x-show="$store.editVmModal.usbFilters.length === 0">USB-фильтры не добавлены.</p>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="port-forward-header">
+                    <label>Общие папки</label>
+                    <button type="button" class="btn btn-small btn-secondary" @click="$store.editVmModal.addSharedFolder()" :disabled="$store.editVmModal.loading">+</button>
+                </div>
+                <div class="port-forward-list">
+                    <template x-for="(folder, index) in $store.editVmModal.sharedFolders" :key="index">
+                        <div class="shared-folder-row">
+                            <input type="text" x-model="folder.name" placeholder="имя" :disabled="$store.editVmModal.loading">
+                            <input type="text" x-model="folder.hostPath" placeholder="путь на хосте" :disabled="$store.editVmModal.loading">
+                            <label class="checkbox-label">
+                                <input type="checkbox" x-model="folder.readOnly" :disabled="$store.editVmModal.loading">
+                                <span>только чтение</span>
+                            </label>
+                            <label class="checkbox-label">
+                                <input type="checkbox" x-model="folder.autoMount" :disabled="$store.editVmModal.loading">
+                                <span>автоподключение</span>
+                            </label>
+                            <button type="button" class="btn btn-small btn-danger" @click="$store.editVmModal.removeSharedFolder(index)" :disabled="$store.editVmModal.loading">−</button>
+                        </div>
+                    </template>
+                    <p class="empty-msg" x-show="$store.editVmModal.sharedFolders.length === 0">Общие папки не добавлены.</p>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn btn-secondary" @click="$store.editVmModal.close()" :disabled="$store.editVmModal.loading">Отмена</button>
+                <button type="submit" class="btn" :disabled="$store.editVmModal.loading">
+                    <span x-show="!$store.editVmModal.loading">Сохранить</span>
+                    <span x-show="$store.editVmModal.loading">Сохранение...</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

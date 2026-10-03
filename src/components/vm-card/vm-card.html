@@ -47,6 +47,7 @@
                     <button class="btn btn-small dropdown-item" :disabled="processing" :class="{'btn-active': activeCommand === 'vrde-restart'}" @click.stop="runVrdeRestart()">Перезагрузка VRDE</button>
                 </template>
                 <button class="btn btn-small btn-secondary dropdown-item" :disabled="processing" @click.stop="openSnapshots()">Снапшоты</button>
+                <button class="btn btn-small btn-secondary dropdown-item" @click.stop="openEditVm()">Параметры VM</button>
             </div>
         </div>
     </div>

@@ -4,8 +4,37 @@ import {
     listDvds as integrationListDvds,
     getVmInfoHuman as integrationGetVmInfoHuman,
 } from "./integration/index.ts";
-import type { VBoxMedium } from "./integration/model.ts";
+import type { VBoxMedium, VBoxSharedFolder, VBoxSharedFolderMapping } from "./integration/model.ts";
 import type { VmDetails, NetworkAdapter, MediaItem, UsbFilter, SharedFolder } from "./model/index.ts";
+
+/** Builds the app-level shared folder list, preferring human-readable flags when available. */
+export function buildSharedFolders(
+    humanFolders: VBoxSharedFolder[],
+    mappings: VBoxSharedFolderMapping[],
+): SharedFolder[] {
+    let sharedFolders: SharedFolder[] = humanFolders.map((folder) => {
+        const flags = folder.flags.map((f) => f.toLowerCase());
+        return {
+            name: folder.name,
+            hostPath: folder.hostPath,
+            guestPath: flags.includes("auto-mount") ? folder.name : "—",
+            readOnly: flags.includes("read-only") || flags.includes("readonly"),
+            autoMount: flags.includes("auto-mount"),
+        };
+    });
+
+    if (sharedFolders.length === 0) {
+        sharedFolders = mappings.map((mapping) => ({
+            name: mapping.name,
+            hostPath: mapping.hostPath || "—",
+            guestPath: mapping.name,
+            readOnly: null,
+            autoMount: null,
+        }));
+    }
+
+    return sharedFolders;
+}
 
 /** Loads and aggregates VM details in the application format. */
 export async function getVmDetails(uuid: string): Promise<VmDetails> {
@@ -34,6 +63,7 @@ export async function getVmDetails(uuid: string): Promise<VmDetails> {
         vrdePort: info.vrde === "on" && info.vrdePorts
             ? info.vrdePorts
             : (info.vrde === "off" ? "выключен" : (info.vrdePorts || "—")),
+        autostart: info.autostart === "on",
     };
 
     const networks: NetworkAdapter[] = [];
@@ -84,26 +114,7 @@ export async function getVmDetails(uuid: string): Promise<VmDetails> {
         return { label, active: filter.active === "on", autoConnect: filter.active === "on" };
     });
 
-    let sharedFolders: SharedFolder[] = humanFolders.map((folder) => {
-        const flags = folder.flags.map((f) => f.toLowerCase());
-        return {
-            name: folder.name,
-            hostPath: folder.hostPath,
-            guestPath: flags.includes("auto-mount") ? folder.name : "—",
-            readOnly: flags.includes("read-only") || flags.includes("readonly"),
-            autoMount: flags.includes("auto-mount"),
-        };
-    });
-
-    if (sharedFolders.length === 0) {
-        sharedFolders = info.sharedFolderMappings.map((mapping) => ({
-            name: mapping.name,
-            hostPath: mapping.hostPath || "—",
-            guestPath: mapping.name,
-            readOnly: null,
-            autoMount: null,
-        }));
-    }
+    const sharedFolders = buildSharedFolders(humanFolders, info.sharedFolderMappings);
 
     return { general, networks, media, usb, sharedFolders };
 }
