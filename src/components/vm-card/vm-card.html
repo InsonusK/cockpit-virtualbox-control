@@ -15,6 +15,7 @@
                 </span>
             </template>
         </span>
+        <span class="badge badge-autostart" x-show="!loadingState && autostart" title="Автозапуск при старте хоста включён">Автозапуск</span>
     </div>
 <div class="vm-actions">
         <template x-if="isRunning()">

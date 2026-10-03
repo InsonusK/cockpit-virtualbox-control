@@ -1,4 +1,4 @@
-import { cpSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 
@@ -17,3 +17,16 @@ cpSync(src, dist, {
         return true;
     },
 });
+
+// Stamp the manifest version into index.html's <meta name="app-version"> tag so the
+// UI can read it synchronously from the DOM instead of fetching manifest.json at runtime.
+const { version } = JSON.parse(readFileSync(path.join(dist, "manifest.json"), "utf8"));
+const indexPath = path.join(dist, "index.html");
+const indexHtml = readFileSync(indexPath, "utf8");
+writeFileSync(
+    indexPath,
+    indexHtml.replace(
+        '<meta name="app-version" content="">',
+        `<meta name="app-version" content="${version}">`,
+    ),
+);

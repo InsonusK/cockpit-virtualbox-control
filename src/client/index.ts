@@ -1,5 +1,6 @@
 export { listVms } from "./listVms.ts";
 export { getVmState } from "./getVmState.ts";
+export { getVmAutostart } from "./getVmAutostart.ts";
 export { getVmDetails } from "./getVmDetails.ts";
 export { controlVm } from "./controlVm.ts";
 export { startVm } from "./startVm.ts";

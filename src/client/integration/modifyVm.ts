@@ -32,6 +32,11 @@ export interface ModifyVmOptions {
  * Applies general, VRDE and autostart settings, then replaces the VM's USB filters
  * and shared folders with the given lists (existing ones are removed first, since
  * VBoxManage addresses USB filters by position and shared folders by name).
+ *
+ * Each VBoxManage call runs independently and failures are collected rather than
+ * aborting the sequence: --memory/--cpus requires the VM to be powered off (VBoxManage
+ * rejects it with VBOX_E_INVALID_VM_STATE otherwise), but that must not prevent
+ * unrelated settings like --autostart-enabled or --vrde from being applied.
  */
 export async function modifyVm(
     uuid: string,
@@ -41,24 +46,28 @@ export async function modifyVm(
 ): Promise<VBoxCommandResult[]> {
     assertUuid(uuid);
     const results: VBoxCommandResult[] = [];
+    const errors: string[] = [];
 
-    results.push({
-        output: await vbox([
-            "modifyvm", uuid,
-            "--memory", String(options.memory),
-            "--cpus", String(options.cpus),
-            "--autostart-enabled", options.autostart ? "on" : "off",
-        ]),
-    });
+    async function run(args: string[]): Promise<void> {
+        try {
+            results.push({ output: await vbox(args) });
+        } catch (e: any) {
+            errors.push(e?.message || String(e));
+        }
+    }
 
-    results.push({
-        output: options.vrdeEnabled
-            ? await vbox(["modifyvm", uuid, "--vrde", "on", "--vrdeport", options.vrdePort])
-            : await vbox(["modifyvm", uuid, "--vrde", "off"]),
-    });
+    await run(["modifyvm", uuid, "--memory", String(options.memory), "--cpus", String(options.cpus)]);
+
+    await run(["modifyvm", uuid, "--autostart-enabled", options.autostart ? "on" : "off"]);
+
+    await run(
+        options.vrdeEnabled
+            ? ["modifyvm", uuid, "--vrde", "on", "--vrdeport", options.vrdePort]
+            : ["modifyvm", uuid, "--vrde", "off"],
+    );
 
     for (let i = existingUsbFilterCount; i >= 1; i--) {
-        results.push({ output: await vbox(["usbfilter", "remove", String(i), "--target", uuid]) });
+        await run(["usbfilter", "remove", String(i), "--target", uuid]);
     }
 
     for (let i = 0; i < options.usbFilters.length; i++) {
@@ -72,18 +81,22 @@ export async function modifyVm(
         ];
         if (filter.vendorId) args.push("--vendorid", filter.vendorId);
         if (filter.productId) args.push("--productid", filter.productId);
-        results.push({ output: await vbox(args) });
+        await run(args);
     }
 
     for (const name of existingSharedFolderNames) {
-        results.push({ output: await vbox(["sharedfolder", "remove", uuid, "--name", name]) });
+        await run(["sharedfolder", "remove", uuid, "--name", name]);
     }
 
     for (const folder of options.sharedFolders) {
         const args = ["sharedfolder", "add", uuid, "--name", folder.name, "--hostpath", folder.hostPath];
         if (folder.readOnly) args.push("--readonly");
         if (folder.autoMount) args.push("--automount");
-        results.push({ output: await vbox(args) });
+        await run(args);
+    }
+
+    if (errors.length > 0) {
+        throw new Error(errors.join("\n"));
     }
 
     return results;
