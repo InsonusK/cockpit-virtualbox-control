@@ -178,6 +178,20 @@ describe("Alpine components with mocked cockpit", () => {
             assert.equal(card.state, "running");
         });
 
+        test("init loads the autostart flag", async () => {
+            cockpitGlobal.cockpit = {
+                spawn: createMockSpawn({
+                    [`showvminfo ${UUID} --machinereadable`]: 'VMState="poweroff"\nautostart_enabled="on"\n',
+                }),
+            };
+
+            const vm = { name: "Test VM", uuid: UUID };
+            const card = alpine.getData("vmCard", vm, app);
+            await card.init();
+
+            assert.equal(card.autostart, true);
+        });
+
         test("init falls back to unknown on state load failure", async () => {
             cockpitGlobal.cockpit = {
                 spawn: () => Promise.reject(new Error("locked")),

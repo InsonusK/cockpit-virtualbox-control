@@ -1,5 +1,6 @@
 import {
     getVmState,
+    getVmAutostart,
     getVmDetails,
     controlVm,
     startVm,
@@ -21,6 +22,7 @@ export interface VmCardData {
     vm: Vm;
     app: AppHandle;
     state: string;
+    autostart: boolean;
     expanded: boolean;
     details: VmDetails | null;
     loadingDetails: boolean;
@@ -57,6 +59,7 @@ export function registerVmCard(Alpine: AlpineStatic): void {
         vm,
         app,
         state: unknown_state,
+        autostart: false,
         expanded: false,
         details: null,
         loadingDetails: false,
@@ -78,13 +81,19 @@ export function registerVmCard(Alpine: AlpineStatic): void {
             app.unregisterCard(vm.uuid);
         },
 
-        /** Fetches and parses the VM state. */
+        /** Fetches and parses the VM state and autostart flag. */
         async loadState() {
             this.loadingState = true;
             try {
-                this.state = await getVmState(vm.uuid);
+                const [state, autostart] = await Promise.all([
+                    getVmState(vm.uuid),
+                    getVmAutostart(vm.uuid),
+                ]);
+                this.state = state;
+                this.autostart = autostart;
             } catch (e: any) {
                 this.state = unknown_state;
+                this.autostart = false;
                 console.warn("loadState failed for", vm.uuid, e.message || e);
             } finally {
                 this.loadingState = false;
