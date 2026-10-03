@@ -3,24 +3,13 @@ sources:
     type: github
     tree: master
     subpath:
-      - skills/common-workflow/develop
-      - skills/common-workflow/test
-      - skills/common-workflow/work-in-git-tree.skill.md
       - skills/common-workflow/documentation
-      - skills/common-workflow/agent-partnership-mindset.skill
-      
+      - skills/design
+
+target:
+  default: {}                          # .agents/skills
+  claude:                              # .claude/skills
+    adapters: [claude-property-adapter]
 settings:
-  target: 
-    for_each:
-      adapters:
-        - link-adapter
-    default:
-      path: .agents/skills
-    claude:
-      path: .claude/skills
-      adapters:
-        - claude-property-adapter
-  remove_orphans: true
-  on_conflict: error
-  dry_run: false
-  add_relations: true
+  remove_orphans: true                 # удалять скилы, которых больше нет в источниках
+  add_relations: true      

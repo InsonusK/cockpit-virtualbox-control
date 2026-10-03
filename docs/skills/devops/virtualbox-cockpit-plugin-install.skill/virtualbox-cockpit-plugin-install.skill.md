@@ -20,6 +20,7 @@ Give an agent everything needed to get this repo's Cockpit plugin visible and wo
 - After files change on disk, Cockpit does not hot-reload — see [procedure-verify.md](./procedure-verify.md).
 - Every release publishes `dist.tar.gz` alongside a `dist.tar.gz.sha256` checksum (see `.github/workflows/release-master.yml`) — this is the only integrity check on the deploy path (the tarball is fetched over a plain URL with no other pinning), so a prod deploy must verify it before extracting; see [procedure-prod-deploy.md](./procedure-prod-deploy.md).
 - Cockpit supports two package locations with different visibility: per-user (`~/.local/share/cockpit/virtualbox`, visible only to that one OS user's session) and system-wide (`/usr/share/cockpit/virtualbox`, visible to every OS user with a Cockpit session on the host). Neither changes what privilege `VBoxManage` runs with — the plugin never requests Cockpit's superuser bridge (`src/client/integration/vbox.ts` calls `cockpit.spawn()` with no `superuser` option), so it always runs as whichever OS user opened the session, in both locations.
+- The plugin's "autostart" toggle (edit-VM modal, `VBoxManage modifyvm --autostart-enabled`) needs the host's VirtualBox autostart database configured separately — this is unaffected by which of the above locations the plugin itself is deployed to. See [procedure-autostart-setup.md](./procedure-autostart-setup.md).
 
 # Installation and access
 See [installation.md](./installation.md) for how to obtain a `dist/` build in the first place (from source, or from a GitHub Release asset) — do this before any procedure below.
@@ -29,6 +30,7 @@ See [installation.md](./installation.md) for how to obtain a `dist/` build in th
 - [procedure-prod-deploy.md](./procedure-prod-deploy.md) — install/update a release build on a server (e.g. from ansible); target host needs no Node.
 - [procedure-verify.md](./procedure-verify.md) — confirm Cockpit picked up the plugin, and how to make it reload after an update.
 - [procedure-remove.md](./procedure-remove.md) — remove the plugin from a host.
+- [procedure-autostart-setup.md](./procedure-autostart-setup.md) — configure the host's VirtualBox autostart database so the plugin's per-VM autostart toggle works, instead of failing with "The path to the autostart database is not set".
 
 # Rule
 
@@ -58,3 +60,4 @@ See [installation.md](./installation.md) for how to obtain a `dist/` build in th
 - [ ] `VBoxManage` is on `PATH` for the user(s) who will use the plugin.
 - [ ] The target's Cockpit version satisfies `manifest.json`'s `requires.cockpit`.
 - [ ] The browser tab (or Cockpit session) was reloaded after the update — see [procedure-verify.md](./procedure-verify.md).
+- [ ] If the autostart toggle is expected to work, the host's autostart database is configured for the relevant OS user(s) — see [procedure-autostart-setup.md](./procedure-autostart-setup.md).
