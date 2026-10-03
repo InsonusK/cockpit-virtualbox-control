@@ -24,17 +24,13 @@ describe("integration/modifyVm", () => {
         sharedFolders: [],
     };
 
-    test("applies general, vrde and autostart settings", async () => {
+    test("applies general, autostart and vrde settings as separate calls", async () => {
         await modifyVm(UUID, 0, [], baseOptions);
         const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args);
 
-        assert.deepEqual(calls[0], [
-            "VBoxManage", "modifyvm", UUID,
-            "--memory", "2048",
-            "--cpus", "2",
-            "--autostart-enabled", "on",
-        ]);
-        assert.deepEqual(calls[1], [
+        assert.deepEqual(calls[0], ["VBoxManage", "modifyvm", UUID, "--memory", "2048", "--cpus", "2"]);
+        assert.deepEqual(calls[1], ["VBoxManage", "modifyvm", UUID, "--autostart-enabled", "on"]);
+        assert.deepEqual(calls[2], [
             "VBoxManage", "modifyvm", UUID,
             "--vrde", "on",
             "--vrdeport", "3390",
@@ -45,13 +41,31 @@ describe("integration/modifyVm", () => {
         await modifyVm(UUID, 0, [], { ...baseOptions, vrdeEnabled: false, autostart: false });
         const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args);
 
-        assert.deepEqual(calls[0], [
+        assert.deepEqual(calls[0], ["VBoxManage", "modifyvm", UUID, "--memory", "2048", "--cpus", "2"]);
+        assert.deepEqual(calls[1], ["VBoxManage", "modifyvm", UUID, "--autostart-enabled", "off"]);
+        assert.deepEqual(calls[2], ["VBoxManage", "modifyvm", UUID, "--vrde", "off"]);
+    });
+
+    test("still applies autostart and vrde when the memory/cpus change is rejected", async () => {
+        const recordedCalls: { args: string[] }[] = [];
+        const spawn = (args: string[]) => {
+            recordedCalls.push({ args });
+            if (args.includes("--memory")) {
+                return Promise.reject(new Error("The machine is not mutable (state is Saved)"));
+            }
+            return Promise.resolve("");
+        };
+        cockpitGlobal.cockpit = { spawn };
+
+        await assert.rejects(async () => modifyVm(UUID, 0, [], baseOptions), /not mutable/);
+        const calls = recordedCalls.map((c) => c.args);
+
+        assert.deepEqual(calls[1], ["VBoxManage", "modifyvm", UUID, "--autostart-enabled", "on"]);
+        assert.deepEqual(calls[2], [
             "VBoxManage", "modifyvm", UUID,
-            "--memory", "2048",
-            "--cpus", "2",
-            "--autostart-enabled", "off",
+            "--vrde", "on",
+            "--vrdeport", "3390",
         ]);
-        assert.deepEqual(calls[1], ["VBoxManage", "modifyvm", UUID, "--vrde", "off"]);
     });
 
     test("removes existing USB filters highest index first, then adds the new list", async () => {
@@ -64,9 +78,9 @@ describe("integration/modifyVm", () => {
         });
         const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args);
 
-        assert.deepEqual(calls[2], ["VBoxManage", "usbfilter", "remove", "2", "--target", UUID]);
-        assert.deepEqual(calls[3], ["VBoxManage", "usbfilter", "remove", "1", "--target", UUID]);
-        assert.deepEqual(calls[4], [
+        assert.deepEqual(calls[3], ["VBoxManage", "usbfilter", "remove", "2", "--target", UUID]);
+        assert.deepEqual(calls[4], ["VBoxManage", "usbfilter", "remove", "1", "--target", UUID]);
+        assert.deepEqual(calls[5], [
             "VBoxManage", "usbfilter", "add", "1",
             "--target", UUID,
             "--name", "Flash drive",
@@ -75,7 +89,7 @@ describe("integration/modifyVm", () => {
             "--vendorid", "0781",
             "--productid", "5567",
         ]);
-        assert.deepEqual(calls[5], [
+        assert.deepEqual(calls[6], [
             "VBoxManage", "usbfilter", "add", "2",
             "--target", UUID,
             "--name", "No ids",
@@ -94,15 +108,15 @@ describe("integration/modifyVm", () => {
         });
         const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args);
 
-        assert.deepEqual(calls[2], ["VBoxManage", "sharedfolder", "remove", UUID, "--name", "old-folder"]);
-        assert.deepEqual(calls[3], [
+        assert.deepEqual(calls[3], ["VBoxManage", "sharedfolder", "remove", UUID, "--name", "old-folder"]);
+        assert.deepEqual(calls[4], [
             "VBoxManage", "sharedfolder", "add", UUID,
             "--name", "shared",
             "--hostpath", "/home/user/shared",
             "--readonly",
             "--automount",
         ]);
-        assert.deepEqual(calls[4], [
+        assert.deepEqual(calls[5], [
             "VBoxManage", "sharedfolder", "add", UUID,
             "--name", "plain",
             "--hostpath", "/home/user/plain",

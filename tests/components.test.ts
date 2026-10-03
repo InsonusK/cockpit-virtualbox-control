@@ -718,7 +718,8 @@ describe("Alpine components with mocked cockpit", () => {
             await modal.submit();
 
             const calls = cockpitGlobal.cockpit.spawn.calls.map((c: any) => c.args.slice(1).join(" "));
-            assert.equal(calls.some((c: string) => c === `modifyvm ${UUID} --memory 4096 --cpus 4 --autostart-enabled on`), true);
+            assert.equal(calls.some((c: string) => c === `modifyvm ${UUID} --memory 4096 --cpus 4`), true);
+            assert.equal(calls.some((c: string) => c === `modifyvm ${UUID} --autostart-enabled on`), true);
             assert.equal(modal.isOpen, false);
             assert.equal(refreshed, true);
             assert.equal(statusMessages.some((m) => /обновлены/.test(m.message)), true);
